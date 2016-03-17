@@ -1,0 +1,11 @@
+in_filelist jl-inputs/Files_Testbeam.txt
+Output_File Output_Testbeam.root
+Entries -1
+Plot_Dir Testbeam
+Region 0
+Condition 25
+Baseline 1
+Time_Slew 2
+Neg_Charges 1
+Threshold 2.7
+Quantile 0.0

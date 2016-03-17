@@ -83,7 +83,9 @@ int main(int argc, char **argv)
 
     readparameters rp(argv[1]);
     //TChain* ch = new TChain("HcalNoiseTree");
-    TChain* ch = new TChain("ExportTree/HcalTree");
+    //TChain* ch = new TChain("ExportTree/HcalTree");
+    TChain* ch = new TChain("HBHEData/Events");
+    TChain* ch2 = new TChain("Timing/Events");
 
     string filelistname;
 
@@ -96,22 +98,24 @@ int main(int argc, char **argv)
     }
     while (getline(filelist,line)) {
       ch->Add(line.c_str());
+      ch2->Add(line.c_str());
     }
 
-  Analysis Ana25ns((TTree*) ch);
+    Analysis Ana25ns((TTree*) ch);
 
-  Ana25ns.Init(argv[1]);
-  Ana25ns.Process();
-  Ana25ns.Finish();
+    Ana25ns.Init(argv[1], (TTree*) ch2);
+    Ana25ns.Process();
+    Ana25ns.Finish();
   }
  return ret;
 }
 
 Analysis::~Analysis() {
 }
+
 Analysis::Analysis(TTree *tree):analysistree(tree){};
 
-void Analysis::Init(char* paramfile)
+void Analysis::Init(char* paramfile, TTree* tree)
 {
   try {
     readparameters rp(paramfile);
@@ -201,6 +205,8 @@ void Analysis::Init(char* paramfile)
   if (Neg_Charges==HLTv2::DoNothing) cout << "Not requiring positive charge outputs." << endl;
   else cout << "Requiring positive charge outputs." << endl;
 
+  tTime = tree;
+
   return; 
 }
 
@@ -211,118 +217,10 @@ void Analysis::Process() {
 
   fout = new TFile(Output_File.c_str(), "RECREATE");
 
-  //DeriveTimeslew();
+  tout = new TTree("Events", "Events");
+  
+
   DoHlt();
-}
-
-void Analysis::DeriveTimeslew() {
-
-  //Get Pulse Fractions
-
-  TCanvas *c1 = new TCanvas("c1", "c1", 800, 600);
-
-  gStyle->SetOptStat(0);
-  
-  TF1* pulse_shape= new TF1("pulse_shape", "[0]*TMath::Landau((x+[1]),[2],[3])",-50,10000);
-  pulse_shape->SetParameter(0,1.0/4.45795);
-  pulse_shape->SetParameter(1,0);
-  pulse_shape->SetParameter(2,14.36);
-  pulse_shape->SetParameter(3,4.46);
-  
-  TGraph *grTS_P = new TGraph(150);
-  TGraph *grTS_IT = new TGraph(150);
-  TGraph *grTS_N = new TGraph(150);
-  TGraph *grTS_NN = new TGraph(150);
-
-  TGraph *grTS_NIT = new TGraph(150);
-  TGraph *grNIT_TS = new TGraph(150);
-
-  for (Int_t i=0; i<150; i++) {
-    Float_t slew = Float_t(i)/10-5;
-    grTS_P->SetPoint(i,slew,pulse_shape->Integral(-25-slew,-slew));
-    grTS_IT->SetPoint(i,slew,pulse_shape->Integral(-slew,25-slew));
-    grTS_N->SetPoint(i,slew,pulse_shape->Integral(25-slew,50-slew));
-    grTS_NN->SetPoint(i,slew,pulse_shape->Integral(50-slew,75-slew));
-
-    grTS_NIT->SetPoint(i,slew,pulse_shape->Integral(25-slew,50-slew)/pulse_shape->Integral(-slew,25-slew));
-    grNIT_TS->SetPoint(i,pulse_shape->Integral(25-slew,50-slew)/pulse_shape->Integral(-slew,25-slew),slew);
-  }
-
-  grTS_P->GetXaxis()->SetTitle("TIME SLEW");
-  grTS_P->GetYaxis()->SetTitle("fraction in PREVIOUS time slice");
-  grTS_P->SetTitle("From Landau fxn");
-  grTS_P->SetLineWidth(3);
-  grTS_P->Draw("al");
-  c1->SaveAs("ts_prev.png");
-
-  grTS_IT->GetXaxis()->SetTitle("TIME SLEW");
-  grTS_IT->GetYaxis()->SetTitle("fraction in INTIME time slice");
-  grTS_IT->SetTitle("From Landau fxn");
-  grTS_IT->SetLineWidth(3);
-  grTS_IT->Draw("al");
-  c1->SaveAs("ts_intime.png");
-
-  grTS_N->GetXaxis()->SetTitle("TIME SLEW");
-  grTS_N->GetYaxis()->SetTitle("fraction in NEXT time slice");
-  grTS_N->SetTitle("From Landau fxn");
-  grTS_N->SetLineWidth(3);
-  grTS_N->Draw("al");
-  c1->SaveAs("ts_next.png");
-
-  grTS_NN->GetXaxis()->SetTitle("TIME SLEW");
-  grTS_NN->GetYaxis()->SetTitle("fraction in NEXT-TO-NEXT time slice");
-  grTS_NN->SetTitle("From Landau fxn");
-  grTS_NN->SetLineWidth(3);
-  grTS_NN->Draw("al");
-  c1->SaveAs("ts_nexttonext.png");
-
-  grTS_NIT->GetXaxis()->SetTitle("TIME SLEW");
-  grTS_NIT->GetYaxis()->SetTitle("NEXT/INTIME");
-  grTS_NIT->SetTitle("From Landau fxn");
-  grTS_NIT->SetLineWidth(3);
-  grTS_NIT->Draw("al");
-  c1->SaveAs("ts_nit.png");
-
-  grNIT_TS->GetXaxis()->SetTitle("NEXT/INTIME");
-  grNIT_TS->GetYaxis()->SetTitle("TIME SLEW");
-  grNIT_TS->SetTitle("From Landau fxn");
-  grNIT_TS->SetLineWidth(3);
-  grNIT_TS->Draw("al");
-  c1->SaveAs("nit_ts.png");
-
-  TProfile *pIT_NIT = new TProfile("pIT_NIT","",50,0,500);
-  TProfile *pIT_TS = new TProfile("pIT_TS","",50,0,500);
-
-  for (Int_t i=0; i<Entries; i++) {
-    fChain->GetEntry(i);
-    for (Int_t j=0; j<PulseCount;j++) {
-      Float_t it=Charge[j][4]+Pedestal[j][4];
-      Float_t nt=Charge[j][5]+Pedestal[j][5];
-      if (it!=0) {
-        pIT_NIT->Fill(it,nt/it);
-        pIT_TS->Fill(it, grNIT_TS->Eval(nt/it));
-      }
-    }
-  }
-
-  pIT_NIT->GetXaxis()->SetTitle("INTIME charge");
-  pIT_NIT->GetYaxis()->SetTitle("NEXT/INTIME");
-  pIT_NIT->SetTitle("From MC");
-  pIT_NIT->Draw("");
-  c1->SaveAs("intime_nit.png");
-
-  TF1 *fitTS = new TF1("fitTS", "[0]+[1]*TMath::Log(x)",10,1000);
-  fitTS->SetLineColor(kRed);
-
-  pIT_TS->Fit("fitTS");
-
-  pIT_TS->GetXaxis()->SetTitle("INTIME charge");
-  pIT_TS->GetYaxis()->SetTitle("TIME SLEW");
-  pIT_TS->SetTitle("From MC + Landau fxn");
-  pIT_TS->Draw("");
-  fitTS->Draw("same");
-  c1->SaveAs("intime_ts.png");
-
 }
 
 void Analysis::DoHlt() {
@@ -334,7 +232,7 @@ void Analysis::DoHlt() {
   
   // --------------------------------------------------------------------
   bool iPedestalConstraint = true;
-  bool iTimeConstraint = true;
+  bool iTimeConstraint = false;
   bool iAddPulseJitter = false;
   bool iUnConstrainedFit = false;
   bool iApplyTimeSlew = true;
@@ -346,11 +244,11 @@ void Analysis::DoHlt() {
   double iPedMean = 0.;
   double iPedSig = 0.5;
   double iNoise = 1.;
-  double iTMin = -18.;
-  double iTMax = 7.;
-  double its3Chi2 = 5.;
-  double its4Chi2 = 15.;
-  double its345Chi2 = 100.;
+  double iTMin = -50.;
+  double iTMax = 50.;
+  double its3Chi2 = 10000.;
+  double its4Chi2 = 10000.;
+  double its345Chi2 = 10000.;
   double iChargeThreshold = 6.;
   int iFitTimes = 1;
     
@@ -368,162 +266,109 @@ void Analysis::DoHlt() {
   //pedSubFxn_->Init(((PedestalSub::Method)Baseline), Condition, Threshold, Quantile);
   pedSubFxn_->Init(((PedestalSub::Method)1), Condition, 2.7, 0.0);
 
-  //Set HLT module
-  //hltv2_->Init((HcalTimeSlew::ParaSource)Time_Slew, HcalTimeSlew::Medium, (HLTv2::NegStrategy)Neg_Charges, *pedSubFxn_);
-  //hltv2_->Init((HcalTimeSlew::ParaSource)2, HcalTimeSlew::Medium, (HLTv2::NegStrategy)0, *pedSubFxn_); // no neg. correction
-  //hltv2_->Init((HcalTimeSlew::ParaSource)2, HcalTimeSlew::Medium, (HLTv2::NegStrategy)1, *pedSubFxn_); // "KISS" correction
-
   hltv2_->Init(HcalTimeSlew::MC, HcalTimeSlew::Medium, (HLTv2::NegStrategy)2, *pedSubFxn_); // Greg's correction
 
-  //Setup plots for what we care about
-  int xBins=200, xMin=0,xMax=200;
+  TH1D *hM2Time = new TH1D("hM2Time", "hM2Time", 90, -20, 10);
+  TH1D *hBchTime = new TH1D("hBchTime", "hBchTime", 100, -200, -100);
 
-  TH1D *a3 = new TH1D("a3","", xBins,xMin,xMax);
-  TH1D *a4 = new TH1D("a4","", xBins,xMin,xMax);
-  TH1D *a5 = new TH1D("a5","", xBins,xMin,xMax);
+  TH2D *hCompTime = new TH2D("hCompTime", "hCompTime", 90, -20, 10, 100, -200, -100);
 
-  TH2D *a4v3 = new TH2D("a4v3","", xBins,xMin,xMax,xBins,xMin,xMax);
-  TH2D *a4v5 = new TH2D("a4v5","", xBins,xMin,xMax,xBins,xMin,xMax);
-  TH2D *a5v3 = new TH2D("a5v3","", xBins,xMin,xMax,xBins,xMin,xMax);
+  TH1D *hM2Charge = new TH1D("hM2Charge", "hM2Charge", 100, 0, 500);
+  TH1D *hM0Charge = new TH1D("hM0Charge", "hM0Charge", 100, 0, 500);
 
-  TH2D* h45vHLT = new TH2D("h45vHLT", "", xBins,xMin,xMax,xBins,xMin,xMax);
-  TProfile* p45vHLT = new TProfile("p45vHLT", "", xBins,xMin,xMax,-10,10);
+  TH2D *hCompCharge = new TH2D("hCompCharge", "hCompCharge", 100, 0, 500, 100, 0, 500);
 
-  TH2D* hM2vHLT = new TH2D("hM2vHLT", "", xBins,xMin,xMax,xBins,xMin,xMax);
-  TProfile *pM2vHLT = new TProfile("pM2vHLT", "", xBins,xMin,xMax,-10,10);
+  Int_t Iphi, Ieta, Depth;
+  Double_t Pulse[10];
+  Double_t Ped[10];
 
-  TH2D* hTiming = new TH2D("hTiming", "", 100, -20, 20, 100, -20, 20);
+  Double_t trigTime, ttcL1, bchTime0;
+  Double_t bchTime[10];
 
+  Double_t recoQ, recoT;
+
+  tTime->SetBranchAddress("triggerTime", &trigTime);
+  tTime->SetBranchAddress("ttcL1Atime", &ttcL1);
+  tTime->SetBranchAddress("bchTime", &bchTime);
+
+  tout->Branch("iphi", &Iphi, "iphi/i");
+  tout->Branch("ieta", &Ieta, "ieta/i");
+  tout->Branch("depth", &Depth, "depth/i");
+  tout->Branch("pulse", &Pulse, "pulse[10]/D");
+  tout->Branch("ped", &Ped, "ped[10]/D");
+
+  tout->Branch("triggerTime", &trigTime, "triggerTime/D");
+  tout->Branch("ttcL1Atime", &ttcL1, "ttcL1Atime/D");
+  tout->Branch("bchTime", &bchTime0, "bchTime/D");
+
+  tout->Branch("recoQ", &recoQ, "recoQ/D");
+  tout->Branch("recoT", &recoT, "recoT/D");
+  
   //Loop over all events
   for (int jentry=0; jentry<Entries;jentry++) {
+  //for (int jentry=0; jentry<100;jentry++) {
     fChain->GetEntry(jentry);
-    cout << jentry << endl;
-    for (int j = 0; j < (int)PulseCount; j++) {
-      if (IEta[j]>16 && Region==Barrel) continue;
-      if (IEta[j]<17 && Region==Endcap) continue;
+    tTime->GetEntry(jentry);
+    //cout << jentry << ", " << ttcL1 << endl;
 
-      std::vector<double> inputCaloSample, inputPedestal, inputGain;
-      std::vector<double> offlineAns, hltAns;
+    //for (int j = 0; j < (int)numChs; j++) {
+    int j=8;
 
-      for (int i=0; i<10; i++) {
-	inputCaloSample.push_back(Charge[j][i]+Pedestal[j][i]);
-	inputPedestal.push_back(Pedestal[j][i]);
-	inputGain.push_back(Gain[j][i]);
-      }
-      
-      // Begin Method 2
-      psFitOOTpuCorr_->apply(inputCaloSample,inputPedestal,inputGain,offlineAns);
-      
-      // Begin Online
-      hltv2_->apply(inputCaloSample,inputPedestal,hltAns);
+    std::vector<double> inputCaloSample, inputPedestal, inputGain;                                                           
+    std::vector<double> offlineAns;// hltAns;
 
-      if (hltAns.size()>1) {
+    Ieta=ieta[j]; Iphi=iphi[j]; Depth=depth[j];
 
-	//Fill Histograms
-	a3->Fill(hltAns.at(0));
-	a4->Fill(hltAns.at(1));
-	a5->Fill(hltAns.at(2));
-	
-	a4v3->Fill(hltAns.at(1), hltAns.at(0));
-	a4v5->Fill(hltAns.at(1), hltAns.at(2));	
-	a5v3->Fill(hltAns.at(2), hltAns.at(0));
+    if (pulse[j][0]==pulse[j][1] && pulse[j][0]==pulse[j][4] && pulse[j][0]==pulse[j][8]) continue;
+    for (int i=0; i<10; i++) {
+      //inputCaloSample.push_back(Charge[j][i]+Pedestal[j][i]);
+      inputCaloSample.push_back(pulse[j][i]);
+      inputPedestal.push_back(0);
+      inputGain.push_back(1.0);
 
-	h45vHLT->Fill( (Charge[j][4]), hltAns.at(1),1);
-	p45vHLT->Fill((Charge[j][4]), -(hltAns.at(1)-(Charge[j][4]))/((Charge[j][4])),1);
+      Pulse[i]=pulse[j][i];
+      //Ped[i]=ped[j][i];
+    }  
+    psFitOOTpuCorr_->apply(inputCaloSample,inputPedestal,inputGain,offlineAns);
 
-	if (offlineAns.size()>1) {
-	  hM2vHLT->Fill( offlineAns.at(0)/Gain[j][0], hltAns.at(1),1);
-	  pM2vHLT->Fill( offlineAns.at(0)/Gain[j][0], -(hltAns.at(1)*Gain[j][0]-(offlineAns.at(0)))/((offlineAns.at(0))),1);
-	  hTiming->Fill( offlineAns.at(1), hltAns.at(3)+iTimeMean );
-	}
-      }
+    recoQ=offlineAns[0];
+    recoT=offlineAns[1];
+    //cout << "------" << endl;
+    //for (int i=0; i<offlineAns.size(); i++) {
+    //cout << pulse[j][4]+pulse[j][5] << " vs " << offlineAns[0] << endl;
+    hM0Charge->Fill(pulse[j][4]+pulse[j][5]);
+    hM2Charge->Fill(offlineAns[0]);
+    hCompCharge->Fill(pulse[j][4]+pulse[j][5], offlineAns[0]);
+    hBchTime->Fill(bchTime[0]-ttcL1);
+    hM2Time->Fill(offlineAns[1]);
+    hCompTime->Fill(offlineAns[1], bchTime[0]-ttcL1);
+    //cout << bchTime[0]-ttcL1 << " vs " << offlineAns[1] << endl;
+    //}
 
-    }
+    tout->Fill();
+
   }
 
   TCanvas *c1 = new TCanvas("c1", "c1", 800, 600);
-  gStyle->SetOptStat(0);
 
-  a3->GetXaxis()->SetTitle("A3 [fC]");
-  a3->GetXaxis()->SetTitleSize(0.05);
-  a3->GetYaxis()->SetTitle("Counts");
-  a3->GetYaxis()->SetTitleSize(0.05);
-  a3->Draw();
-  c1->SaveAs(TString(Plot_Dir.c_str())+"/a3.png");
+  hM0Charge->Draw();
+  c1->SaveAs("hM0Charge.png");
+
+  hM2Charge->Draw();
+  c1->SaveAs("hM2Charge.png");
+
+  hCompCharge->Draw("colz");
+  c1->SaveAs("hCompCharge.png");
+
+  hM2Time->Draw();
+  c1->SaveAs("hM2Time.png");
+
+  hBchTime->Draw();
+  c1->SaveAs("hBchTime.png");
+
+  hCompTime->Draw("colz");
+  c1->SaveAs("hCompTime.png");
   
-  a4->GetXaxis()->SetTitle("A4 [fC]");
-  a4->GetXaxis()->SetTitleSize(0.05);
-  a4->GetYaxis()->SetTitle("Counts");
-  a4->GetYaxis()->SetTitleSize(0.05);
-  a4->Draw();
-  c1->SaveAs(TString(Plot_Dir.c_str())+"/a4.png");
-  
-  a5->GetXaxis()->SetTitle("A5 [fC]");
-  a5->GetXaxis()->SetTitleSize(0.05);
-  a5->GetYaxis()->SetTitle("Counts");
-  a5->GetYaxis()->SetTitleSize(0.05);
-  a5->Draw();
-  c1->SaveAs(TString(Plot_Dir.c_str())+"/a5.png");
-
-  a4v3->GetXaxis()->SetTitle("A4 [fC]");
-  a4v3->GetXaxis()->SetTitleSize(0.05);
-  a4v3->GetYaxis()->SetTitle("A3 [fC]");
-  a4v3->GetYaxis()->SetTitleSize(0.05);
-  a4v3->Draw("colz");
-  c1->SaveAs(TString(Plot_Dir.c_str())+"/a4v3.png");
-
-  a4v5->GetXaxis()->SetTitle("A4 [fC]");
-  a4v5->GetXaxis()->SetTitleSize(0.05);
-  a4v5->GetYaxis()->SetTitle("A5 [fC]");
-  a4v5->GetYaxis()->SetTitleSize(0.05);
-  a4v5->Draw("colz");
-  c1->SaveAs(TString(Plot_Dir.c_str())+"/a4v5.png");
-
-  a5v3->GetXaxis()->SetTitle("A5 [fC]");
-  a5v3->GetXaxis()->SetTitleSize(0.05);
-  a5v3->GetYaxis()->SetTitle("A3 [fC]");
-  a5v3->GetYaxis()->SetTitleSize(0.05);
-  a5v3->Draw("colz");
-  c1->SaveAs(TString(Plot_Dir.c_str())+"/a5v3.png");
-
-  h45vHLT->GetXaxis()->SetTitle("Charge TS4 [fC]");
-  h45vHLT->GetXaxis()->SetTitleSize(0.05);
-  h45vHLT->GetYaxis()->SetTitle("Charge from HLT [fC]");
-  h45vHLT->GetYaxis()->SetTitleSize(0.05);
-  h45vHLT->Draw("");
-  c1->SaveAs(TString(Plot_Dir.c_str())+"/h4vHLT.png");
-  
-  p45vHLT->GetXaxis()->SetTitle("Charge in TS4 [fC]");
-  p45vHLT->GetXaxis()->SetTitleSize(0.05);
-  p45vHLT->GetYaxis()->SetTitle("(HLT - E4)/E4");
-  p45vHLT->GetYaxis()->SetTitleSize(0.05);
-  p45vHLT->GetYaxis()->SetRangeUser(-1,1);
-  p45vHLT->Draw();
-  c1->SaveAs(TString(Plot_Dir.c_str())+"/p4vHLT.png");
-
-  hM2vHLT->GetXaxis()->SetTitle("M2 Charge [fC]");
-  hM2vHLT->GetXaxis()->SetTitleSize(0.05);
-  hM2vHLT->GetYaxis()->SetTitle("Charge from HLT [fC]");
-  hM2vHLT->GetYaxis()->SetTitleSize(0.05);
-  hM2vHLT->Draw("");
-  c1->SaveAs(TString(Plot_Dir.c_str())+"/hM2vHLT.png");
-
-  pM2vHLT->GetXaxis()->SetTitle("M2 Charge [fC]");
-  pM2vHLT->GetXaxis()->SetTitleSize(0.05);
-  pM2vHLT->GetYaxis()->SetTitle("(HLT - M2)/(M2)");
-  pM2vHLT->GetYaxis()->SetTitleSize(0.05);
-  pM2vHLT->GetYaxis()->SetRangeUser(-1,1);
-  pM2vHLT->Draw();
-  c1->SaveAs(TString(Plot_Dir.c_str())+"/pM2vHLT.png");
-
-  hTiming->GetXaxis()->SetTitle("M2 Timing [ns]");
-  hTiming->GetXaxis()->SetTitleSize(0.05);
-  hTiming->GetYaxis()->SetTitle("HLT Timing [ns]");
-  hTiming->GetYaxis()->SetTitleSize(0.05);
-  hTiming->Draw("colz");
-  c1->SaveAs(TString(Plot_Dir.c_str())+"/htiming.png");
-
-
 }
 
 void Analysis::Finish()

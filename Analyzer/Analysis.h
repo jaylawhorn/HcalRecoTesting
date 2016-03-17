@@ -12,6 +12,7 @@
 #include "TProfile.h"
 #include "TGraph.h"
 #include "TFile.h"
+#include "TChain.h"
 #include "TF1.h"
 #include "TCanvas.h"
 #include "TStyle.h"
@@ -29,6 +30,8 @@
 #include "PedestalSub.h"
 
 #include "analysistree.h"
+#include "Timing.h"
+//#include "HBHEData.h"
 
 using namespace std;
 const double EL_CHARGE=1.60217657*pow(10,-19);
@@ -54,21 +57,26 @@ class Analysis : public analysistree
   float Threshold;
   float Quantile;
 
+  //HBHEData tHBHE;
+
+  //Analysis(TTree *tree1, TTree *tree2);
   Analysis(TTree *tree);
   ~Analysis();
 
-  void Init(char* paramfile);
+  void Init(char* paramfile, TTree *tree);
   void Process();
   void Finish();
 
-  void DeriveTimeslew();
   void DoHlt();
 
   void useMethod2(){psFitOOTpuCorr_ = std::auto_ptr<PulseShapeFitOOTPileupCorrection>(new PulseShapeFitOOTPileupCorrection()); }
   std::auto_ptr<PedestalSub> pedSubFxn_= std::auto_ptr<PedestalSub>(new PedestalSub());
          
  private:
+  TTree *tTime;
   TFile *fout;
+  TTree *tout;
+
   std::auto_ptr<PulseShapeFitOOTPileupCorrection> psFitOOTpuCorr_= std::auto_ptr<PulseShapeFitOOTPileupCorrection>(new PulseShapeFitOOTPileupCorrection());
   std::auto_ptr<HLTv2> hltv2_= std::auto_ptr<HLTv2>(new HLTv2());
   HcalPulseShapes theHcalPulseShapes_;

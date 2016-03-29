@@ -239,7 +239,7 @@ void Analysis::DoHlt() {
   double iTS4Min = 5.;
   double iTS4Max = 500.;
   double iPulseJitter = 1.;
-  double iTimeMean = -5.5;
+  double iTimeMean = 0;
   double iTimeSig = 5.;
   double iPedMean = 0.;
   double iPedSig = 0.5;
@@ -285,7 +285,8 @@ void Analysis::DoHlt() {
   Double_t trigTime, ttcL1, bchTime0;
   Double_t bchTime[10];
 
-  Double_t recoQ, recoT;
+  Double_t recoQ, recoT, recoP, recoChi;
+  Double_t recoPulse[10];
 
   tTime->SetBranchAddress("triggerTime", &trigTime);
   tTime->SetBranchAddress("ttcL1Atime", &ttcL1);
@@ -303,6 +304,9 @@ void Analysis::DoHlt() {
 
   tout->Branch("recoQ", &recoQ, "recoQ/D");
   tout->Branch("recoT", &recoT, "recoT/D");
+  tout->Branch("recoP", &recoP, "recoP/D");
+  tout->Branch("recoChi", &recoChi, "recoChi/D");
+  tout->Branch("recoPulse", &recoPulse, "recoPulse[10]/D");
   
   //Loop over all events
   for (int jentry=0; jentry<Entries;jentry++) {
@@ -333,8 +337,20 @@ void Analysis::DoHlt() {
 
     recoQ=offlineAns[0];
     recoT=offlineAns[1];
+    recoP=offlineAns[2];
+    recoChi=offlineAns[3];
+    for (uint i=0; i<offlineAns.size(); i++) {
+      if (i>3 && uint(i-4) < 10) {
+	//cout << i-4 << endl;
+	recoPulse[uint(i-4)] = offlineAns[i];
+      }
+    }
+    cout << "post-return: " << endl;
+    for (uint i=0; i<offlineAns.size(); i++) {
+       cout << offlineAns[i] << ", ";
+    }
+    cout << endl;
     //cout << "------" << endl;
-    //for (int i=0; i<offlineAns.size(); i++) {
     //cout << pulse[j][4]+pulse[j][5] << " vs " << offlineAns[0] << endl;
     hM0Charge->Fill(pulse[j][4]+pulse[j][5]);
     hM2Charge->Fill(offlineAns[0]);

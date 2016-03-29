@@ -347,15 +347,19 @@ int PulseShapeFitOOTPileupCorrection::pulseShapeFit(const double * energyArr, co
    float pedvalfit   = 0;
    float chi2        = 999; //cannot be zero
    bool  fitStatus   = false;
-  // bool usedThreePulses = false;
+   //bool usedThreePulses = false;
    int BX[3] = {4,5,3};
+
+   //std::cout << std::endl;
+   //std::cout << "---------" << std::endl;
+
    if(ts4Chi2_ != 0) fit(1,timevalfit,chargevalfit,pedvalfit,chi2,fitStatus,tsMAX,tsTOTen,tmpy,BX);
 // Based on the pulse shape ( 2. likely gives the same performance )
    if(tmpy[2] > 3.*tmpy[3]) BX[2] = 2;
 // Only do three-pulse fit when tstrig < ts4Max_, otherwise one-pulse fit is used (above)
    if(chi2 > ts4Chi2_ && !unConstrainedFit_ && tstrig < ts4Max_)   { //fails chi2 cut goes straight to 3 Pulse fit
      fit(3,timevalfit,chargevalfit,pedvalfit,chi2,fitStatus,tsMAX,tsTOTen,tmpy,BX);
-    // usedThreePulses = true;
+     //usedThreePulses = true;
    }
    if(unConstrainedFit_ && nAboveThreshold > 5) { //For the old method 2 do double pulse fit if values above a threshold
      fit(2,timevalfit,chargevalfit,pedvalfit,chi2,fitStatus,tsMAX,tsTOTen,tmpy,BX); 
@@ -375,22 +379,33 @@ int PulseShapeFitOOTPileupCorrection::pulseShapeFit(const double * energyArr, co
 //     // Print statements for debugging
 //   // if(chargevalfit < 0.5){
 //     std::cout << fitStatusHolder << " " << chi2 << " " << timevalfit << " " << chargevalfit << " " << timevalfit2_hold << " " << chargevalfit2_hold << " " << timevalfit3_hold << " " << chargevalfit3_hold << " ";
-//     
-//     for(int k = 0; k < 10; k++){
-//       std::cout << digi_temp[k] << " "; 
-//     }
-// //     for(int k = 0; k < 10; k++){
-// //       std::cout << tmpslew[k] << " "; 
-// //     }
-//     for(int k = 0; k < 10; k++){
-//       std::cout << pulse_1_temp[k] << " "; 
-//     }
-//     for(int k = 0; k < 10; k++){
-//       std::cout << pulse_2_temp[k] << " "; 
-//     }
-//     for(int k = 0; k < 10; k++){
-//       std::cout << pulse_3_temp[k] << " "; 
-//     }
+// 
+   //std::cout << "rechit energy = " << chargevalfit << ", timevalfit = " << timevalfit << ", pedvalfit = " << pedvalfit << ", chi2 = " << chi2 <<  std::endl;
+   //std::cout << "digi_temp: ";
+   //for(int k = 0; k < 10; k++){
+   //  std::cout << digi_temp[k] << " "; 
+   //}
+   //std::cout << std::endl;
+   //std::cout << "tmpslew: ";
+   //for(int k = 0; k < 10; k++){
+   //  std::cout << tmpslew[k] << " "; 
+   //}
+   //std::cout << std::endl;
+   //std::cout << "pulse_1_temp: ";
+   //for(int k = 0; k < 10; k++){
+   //  std::cout << pulse_1_temp[k] << " "; 
+   //}
+   //std::cout << std::endl;
+   //std::cout << "pulse_2_temp: ";
+   //for(int k = 0; k < 10; k++){
+   //  std::cout << pulse_2_temp[k] << " "; 
+   //}
+   //std::cout << std::endl;
+   //std::cout << "pulse_3_temp: ";
+   //for(int k = 0; k < 10; k++){
+   //  std::cout << pulse_3_temp[k] << " "; 
+   //}
+   //std::cout << std::endl;
 //     std::cout << pedvalfit << std::endl;
 //    //}
 
@@ -407,6 +422,9 @@ int PulseShapeFitOOTPileupCorrection::pulseShapeFit(const double * energyArr, co
    fitParsVec.push_back(timevalfit);
    fitParsVec.push_back(pedvalfit);
    fitParsVec.push_back(chi2);
+   for(int k=0; k<10; k++) {
+     fitParsVec.push_back(pulse_1_temp[k]);
+   }
    return outfitStatus;
 }
 

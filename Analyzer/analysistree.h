@@ -4,19 +4,19 @@
 
 #ifndef ANALYSISTREE_H
 #define ANALYSISTREE_H
-//#define NoiseTreeData_cxx
-#define HBHEData_cxx
+#define NoiseTreeData_cxx
+//#define HBHEData_cxx
 
 #include <vector>
 
 using namespace std;
 
-//#include "NoiseTreeData.h"
-#include "HBHEData.h"
+#include "NoiseTreeData.h"
+//#include "HBHEData.h"
 
 
 
-//typedef NoiseTreeData analysistree;
-typedef HBHEData analysistree;
+typedef NoiseTreeData analysistree;
+//typedef HBHEData analysistree;
 
 #endif // ANALYSISTREE_H

@@ -323,7 +323,8 @@ int PulseShapeFitOOTPileupCorrection::pulseShapeFit(const double * energyArr, co
       if(applyTimeSlew_) tmpslew[i] = HcalTimeSlew::delay(std::max(1.0,chargeArr[i]),slewFlavor_); 
       //Add Greg's channel discretization
       double sigmaBin =  psfPtr_->sigma(chargeArr[i]);
-      tmperry2[i]=noise_*noise_+ sigmaBin*sigmaBin; //Greg's Granularity
+      //tmperry2[i]=noise_*noise_+ sigmaBin*sigmaBin; //Greg's Granularity
+      tmperry2[i]=noise_*noise_;//+ sigmaBin*sigmaBin; //Greg's Granularity
       //Propagate it through
       tmperry2[i]*=(gainArr[i]*gainArr[i]); //Convert from fC to GeV
       tmperry [i]=sqrt(tmperry2[i]);

@@ -24,6 +24,7 @@
 #include "HybridMinimizer.h"
 #include "PulseShapeFitOOTPileupCorrection.h"
 #include "HLTv2.h"
+#include "Slowboat.h"
 
 #include "inverseGaussCDF.hh"
 #include "sampleQuantile.hh"
@@ -80,6 +81,8 @@ class Analysis : public analysistree
   std::auto_ptr<PulseShapeFitOOTPileupCorrection> psFitOOTpuCorr_= std::auto_ptr<PulseShapeFitOOTPileupCorrection>(new PulseShapeFitOOTPileupCorrection());
   std::auto_ptr<HLTv2> hltv2_= std::auto_ptr<HLTv2>(new HLTv2());
   HcalPulseShapes theHcalPulseShapes_;
+
+  std::auto_ptr<Slowboat> Slowboat_ = std::auto_ptr<Slowboat>(new Slowboat());
 
 };
 #endif // Analysis_H 

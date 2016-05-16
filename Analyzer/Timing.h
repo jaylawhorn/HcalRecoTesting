@@ -31,6 +31,7 @@ public :
    Double_t        ttcL1Atime;
    Double_t        qiePhase;
    Double_t        bchTime[5];   //[bcCount]
+   Double_t        s1Time[5];   //[bcCount]
 
    // List of branches
    TBranch        *b_s1Count;   //!
@@ -42,6 +43,7 @@ public :
    TBranch        *b_ttcL1Atime;   //!
    TBranch        *b_qiePhase;   //!
    TBranch        *b_bchTime;   //!
+   TBranch        *b_s1Time;   //!
 
    Timing(TTree *tree=0);
    virtual ~Timing();
@@ -123,6 +125,7 @@ void Timing::Init(TTree *tree)
    fChain->SetBranchAddress("ttcL1Atime", &ttcL1Atime, &b_ttcL1Atime);
    fChain->SetBranchAddress("qiePhase", &qiePhase, &b_qiePhase);
    fChain->SetBranchAddress("bchTime", bchTime, &b_bchTime);
+   fChain->SetBranchAddress("s1Time", s1Time, &b_s1Time);
    Notify();
 }
 

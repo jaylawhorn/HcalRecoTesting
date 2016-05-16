@@ -83,9 +83,9 @@ int main(int argc, char **argv)
 
     readparameters rp(argv[1]);
     //TChain* ch = new TChain("HcalNoiseTree");
-    //TChain* ch = new TChain("ExportTree/HcalTree");
-    TChain* ch = new TChain("HBHEData/Events");
-    TChain* ch2 = new TChain("Timing/Events");
+    TChain* ch = new TChain("ExportTree/HcalTree");
+    //TChain* ch = new TChain("HBHEData/Events");
+    //TChain* ch2 = new TChain("Timing/Events");
 
     string filelistname;
 
@@ -98,12 +98,12 @@ int main(int argc, char **argv)
     }
     while (getline(filelist,line)) {
       ch->Add(line.c_str());
-      ch2->Add(line.c_str());
+      //ch2->Add(line.c_str());
     }
 
     Analysis Ana25ns((TTree*) ch);
 
-    Ana25ns.Init(argv[1], (TTree*) ch2);
+    Ana25ns.Init(argv[1], (TTree*) ch);
     Ana25ns.Process();
     Ana25ns.Finish();
   }
@@ -153,19 +153,19 @@ void Analysis::Init(char* paramfile, TTree* tree)
   else if (Region==Barrel) { cout << "HCAL barrel. " << endl; }
   else if (Region==Endcap) { cout << "HCAL endcap. " << endl; }
 
-  if (Condition==0) {
-    cout << "With no PU. " << endl;
-  }
-  else if (Condition==50) {
-    cout << "50 ns spacing, 20 PU." << endl;
-  }
-  else if (Condition==25) {
-    cout << "25 ns spacing, 20 PU." << endl;
-  }
-  else {
-    Condition=0;
-    cout << "Unrecognized run condition, using no PU." << endl;
-  }
+  //if (Condition==0) {
+  //  cout << "With no PU. " << endl;
+  //}
+  //else if (Condition==50) {
+  //  cout << "50 ns spacing, 20 PU." << endl;
+  //}
+  //else if (Condition==25) {
+  //  cout << "25 ns spacing, 20 PU." << endl;
+  //}
+  //else {
+  //  Condition=0;
+  //  cout << "Unrecognized run condition, using no PU." << endl;
+  //}
 
   int check=mkdir(Plot_Dir.c_str(),755);
   if (!check) {
@@ -176,36 +176,36 @@ void Analysis::Init(char* paramfile, TTree* tree)
     //exit(1);
   }
 
-  if (Baseline==PedestalSub::DoNothing) {
-    cout << "Pedestal subtraction only." << endl;
-  }
-  else if (Baseline==PedestalSub::AvgWithThresh) {
-    cout << "Pedestal subtraction, average baseline subtraction with threshold: " << Threshold << endl;
-  }
-  else if (Baseline==PedestalSub::AvgWithoutThresh) {
-    cout << "Pedestal subtraction, average baseline subtraction with no threshold. " << endl;
-  }
-  else if (Baseline==PedestalSub::AvgWithThreshNoPedSub) {
-    cout << "Average baseline+pedestal subtraction with threshold: " << Threshold << endl;
-  }
-  else if (Baseline==PedestalSub::Percentile) {
-    cout << "Percentile-based pedestal subtraction ";
-    if (Quantile<0 || Quantile>1) {
-      cout << endl << "Quantile value out of range. Not running." << endl;
-      exit(1);
-    }
-    else  {
-      cout << "with quantile value: " << Quantile << endl;
-    }
-  }
+  //if (Baseline==PedestalSub::DoNothing) {
+  //  cout << "Pedestal subtraction only." << endl;
+  //}
+  //else if (Baseline==PedestalSub::AvgWithThresh) {
+  //  cout << "Pedestal subtraction, average baseline subtraction with threshold: " << Threshold << endl;
+  //}
+  //else if (Baseline==PedestalSub::AvgWithoutThresh) {
+  //  cout << "Pedestal subtraction, average baseline subtraction with no threshold. " << endl;
+  //}
+  //else if (Baseline==PedestalSub::AvgWithThreshNoPedSub) {
+  //  cout << "Average baseline+pedestal subtraction with threshold: " << Threshold << endl;
+  //}
+  //else if (Baseline==PedestalSub::Percentile) {
+  //  cout << "Percentile-based pedestal subtraction ";
+  //  if (Quantile<0 || Quantile>1) {
+  //    cout << endl << "Quantile value out of range. Not running." << endl;
+  //    exit(1);
+  //  }
+  //  else  {
+  //    cout << "with quantile value: " << Quantile << endl;
+  //  }
+  //}
+  //
+  //if (Time_Slew==HcalTimeSlew::TestStand) cout << "Using test stand medium WP time slew parameterization." << endl;
+  //else cout << "Sorry, I don't know which time slew correction you asked for." << endl;
+  //
+  //if (Neg_Charges==HLTv2::DoNothing) cout << "Not requiring positive charge outputs." << endl;
+  //else cout << "Requiring positive charge outputs." << endl;
 
-  if (Time_Slew==HcalTimeSlew::TestStand) cout << "Using test stand medium WP time slew parameterization." << endl;
-  else cout << "Sorry, I don't know which time slew correction you asked for." << endl;
-
-  if (Neg_Charges==HLTv2::DoNothing) cout << "Not requiring positive charge outputs." << endl;
-  else cout << "Requiring positive charge outputs." << endl;
-
-  tTime = tree;
+  //tTime = tree;
 
   return; 
 }
@@ -214,6 +214,8 @@ void Analysis::Process() {
   if (fChain == 0) return;
 
   if (Entries==-1) Entries=fChain->GetEntries();
+
+  //std::cout << Entries << std::endl;
 
   fout = new TFile(Output_File.c_str(), "RECREATE");
 
@@ -261,130 +263,158 @@ void Analysis::DoHlt() {
   
   // Now set the Pulse shape type
   psFitOOTpuCorr_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(105));
+
+  Slowboat_->Init(20.0, 5.0, 1.0, 5.0);
   
   //Setup HLT pedestal/baseline subtraction module
   //pedSubFxn_->Init(((PedestalSub::Method)Baseline), Condition, Threshold, Quantile);
-  pedSubFxn_->Init(((PedestalSub::Method)1), Condition, 2.7, 0.0);
+  //pedSubFxn_->Init(((PedestalSub::Method)1), Condition, 2.7, 0.0);
 
-  hltv2_->Init(HcalTimeSlew::MC, HcalTimeSlew::Medium, (HLTv2::NegStrategy)2, *pedSubFxn_); // Greg's correction
+  //hltv2_->Init(HcalTimeSlew::MC, HcalTimeSlew::Medium, (HLTv2::NegStrategy)2, *pedSubFxn_); // Greg's correction
 
-  TH1D *hM2Time = new TH1D("hM2Time", "hM2Time", 90, -20, 10);
-  TH1D *hBchTime = new TH1D("hBchTime", "hBchTime", 100, -200, -100);
-
-  TH2D *hCompTime = new TH2D("hCompTime", "hCompTime", 90, -20, 10, 100, -200, -100);
-
-  TH1D *hM2Charge = new TH1D("hM2Charge", "hM2Charge", 100, 0, 500);
-  TH1D *hM0Charge = new TH1D("hM0Charge", "hM0Charge", 100, 0, 500);
-
-  TH2D *hCompCharge = new TH2D("hCompCharge", "hCompCharge", 100, 0, 500, 100, 0, 500);
-
-  Int_t Iphi, Ieta, Depth;
+  Int_t iphi, ieta, depth;
+  Int_t TS[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
   Double_t Pulse[10];
   Double_t Ped[10];
 
-  Double_t trigTime, ttcL1, bchTime0;
-  Double_t bchTime[10];
+  Double_t trigTime=0, ttcL1=0, bchTime0=0, s1Time0=0;
+  //Double_t bchTime[10];
+  //Double_t s1Time[10];
 
-  Double_t recoQ, recoT, recoP, recoChi;
-  Double_t recoPulse[10];
+  Double_t m2Charge, m2Time, m2Ped, m2Chi;
+  Double_t m2Pulse[10];
 
-  tTime->SetBranchAddress("triggerTime", &trigTime);
-  tTime->SetBranchAddress("ttcL1Atime", &ttcL1);
-  tTime->SetBranchAddress("bchTime", &bchTime);
+  Double_t wTime;
 
-  tout->Branch("iphi", &Iphi, "iphi/i");
-  tout->Branch("ieta", &Ieta, "ieta/i");
-  tout->Branch("depth", &Depth, "depth/i");
+  Double_t slow0, slow1, slow2, slow3;
+  Double_t slowPulse[10];
+
+  //tTime->SetBranchAddress("triggerTime", &trigTime);
+  //tTime->SetBranchAddress("ttcL1Atime",  &ttcL1);
+  //tTime->SetBranchAddress("bchTime",     &bchTime);
+  //tTime->SetBranchAddress("s1Time",      &s1Time);
+
+  tout->Branch("iphi",  &iphi,  "iphi/I");
+  tout->Branch("ieta",  &ieta,  "ieta/I");
+  tout->Branch("depth", &depth, "depth/I");
+  tout->Branch("TS",    &TS,    "TS[10]/I");
   tout->Branch("pulse", &Pulse, "pulse[10]/D");
-  tout->Branch("ped", &Ped, "ped[10]/D");
+  tout->Branch("ped",   &Ped,   "ped[10]/D");
 
-  tout->Branch("triggerTime", &trigTime, "triggerTime/D");
-  tout->Branch("ttcL1Atime", &ttcL1, "ttcL1Atime/D");
-  tout->Branch("bchTime", &bchTime0, "bchTime/D");
+  //tout->Branch("triggerTime", &trigTime, "triggerTime/D");
+  //tout->Branch("ttcL1Atime",  &ttcL1,    "ttcL1Atime/D");
+  //tout->Branch("bchTime",     &bchTime0, "bchTime/D");
+  //tout->Branch("s1Time",      &s1Time0,  "s1Time/D");
 
-  tout->Branch("recoQ", &recoQ, "recoQ/D");
-  tout->Branch("recoT", &recoT, "recoT/D");
-  tout->Branch("recoP", &recoP, "recoP/D");
-  tout->Branch("recoChi", &recoChi, "recoChi/D");
-  tout->Branch("recoPulse", &recoPulse, "recoPulse[10]/D");
+  tout->Branch("m2Charge", &m2Charge, "m2Charge/D");
+  tout->Branch("m2Time",   &m2Time,   "m2Time/D");
+  tout->Branch("m2Ped",    &m2Ped,    "m2Ped/D");
+  tout->Branch("m2Chi",    &m2Chi,    "m2Chi/D");
+  tout->Branch("m2Pulse",  &m2Pulse,  "m2Pulse[10]/D");
+
+  tout->Branch("wTime", &wTime, "wTime/D");
+
+  tout->Branch("slow0", &slow0, "slow0/D");
+  tout->Branch("slow1", &slow1, "slow1/D");
+  tout->Branch("slow2", &slow2, "slow2/D");
+  tout->Branch("slow3", &slow3, "slow3/D");
+  tout->Branch("slowPulse", &slowPulse, "slowPulse[10]/D");
   
   //Loop over all events
   for (int jentry=0; jentry<Entries;jentry++) {
-  //for (int jentry=0; jentry<100;jentry++) {
+
     fChain->GetEntry(jentry);
-    tTime->GetEntry(jentry);
-    //cout << jentry << ", " << ttcL1 << endl;
+    //tTime->GetEntry(jentry);
 
-    //for (int j = 0; j < (int)numChs; j++) {
-    int j=8;
+    //s1Time0=s1Time[0];
+    //bchTime0=bchTime[0];
 
-    std::vector<double> inputCaloSample, inputPedestal, inputGain;                                                           
-    std::vector<double> offlineAns;// hltAns;
+    for (int j = 0; j < (int)PulseCount; j++) {
 
-    Ieta=ieta[j]; Iphi=iphi[j]; Depth=depth[j];
+      if (IEta[j]>16 && Region==Barrel) continue;
+      if (IEta[j]<17 && Region==Endcap) continue;
 
-    if (pulse[j][0]==pulse[j][1] && pulse[j][0]==pulse[j][4] && pulse[j][0]==pulse[j][8]) continue;
-    for (int i=0; i<10; i++) {
-      //inputCaloSample.push_back(Charge[j][i]+Pedestal[j][i]);
-      inputCaloSample.push_back(pulse[j][i]);
-      inputPedestal.push_back(0);
-      inputGain.push_back(1.0);
+      std::vector<double> inputCaloSample, inputPedestal, inputGain;                                                           
+      std::vector<double> offlineAns, slowAns;
+      
+      ieta=IEta[j]; iphi=IPhi[j]; depth=Depth[j];
 
-      Pulse[i]=pulse[j][i];
-      //Ped[i]=ped[j][i];
-    }  
-    psFitOOTpuCorr_->apply(inputCaloSample,inputPedestal,inputGain,offlineAns);
+      //float sum=0;
+      //for (uint i=0; i<10; i++) sum+=Charge[j][i];
+      //
+      //if (sum<50) continue;
+      //
+      //bool filter=true;
+      //int npeak=0;
+      //
+      //for (int i=0; i<10; i++) {
+      //	if (Charge[j][i]>15) {
+      //	  if (i==0) {
+      //	    filter=false;
+      //	    if (Charge[j][0]>Charge[j][1]) npeak++;
+      //	  } if (i==9) {
+      //	    filter=false;
+      //	    if (Charge[j][9]>Charge[j][8]) npeak++;
+      //	  } else {
+      //	    if (Charge[j][i]>Charge[j][i+1] && Charge[j][i]>Charge[j][i-1]) npeak++;
+      //	  }
+      //	}
+      //}
+      //if (npeak>1) filter=false;
+      //
+      //if (filter==false) continue;
 
-    recoQ=offlineAns[0];
-    recoT=offlineAns[1];
-    recoP=offlineAns[2];
-    recoChi=offlineAns[3];
-    for (uint i=0; i<offlineAns.size(); i++) {
-      if (i>3 && uint(i-4) < 10) {
-	//cout << i-4 << endl;
-	recoPulse[uint(i-4)] = offlineAns[i];
+      wTime=0;
+      Double_t temp=0;
+
+      for (int i=0; i<10; i++) {
+	inputCaloSample.push_back(Charge[j][i]+Pedestal[j][i]);
+	inputPedestal.push_back(Pedestal[j][i]);
+	inputGain.push_back(Gain[j][i]);
+      	//inputCaloSample.push_back(pulse[j][i]);
+      	//inputPedestal.push_back(0);
+      	//inputGain.push_back(1.0);
+      	
+      	Pulse[i]=Charge[j][i]+Pedestal[j][i];
+	Ped[i]=Pedestal[j][i];
+
+	wTime+=i*Pulse[i];
+	temp+=Pulse[i];
+
       }
-    }
-    cout << "post-return: " << endl;
-    for (uint i=0; i<offlineAns.size(); i++) {
-       cout << offlineAns[i] << ", ";
-    }
-    cout << endl;
-    //cout << "------" << endl;
-    //cout << pulse[j][4]+pulse[j][5] << " vs " << offlineAns[0] << endl;
-    hM0Charge->Fill(pulse[j][4]+pulse[j][5]);
-    hM2Charge->Fill(offlineAns[0]);
-    hCompCharge->Fill(pulse[j][4]+pulse[j][5], offlineAns[0]);
-    hBchTime->Fill(bchTime[0]-ttcL1);
-    hM2Time->Fill(offlineAns[1]);
-    hCompTime->Fill(offlineAns[1], bchTime[0]-ttcL1);
-    //cout << bchTime[0]-ttcL1 << " vs " << offlineAns[1] << endl;
-    //}
 
-    tout->Fill();
+      wTime=wTime/temp;
 
+      psFitOOTpuCorr_->apply(inputCaloSample,inputPedestal,inputGain,offlineAns);
+
+      m2Charge=offlineAns[0];
+      m2Time=offlineAns[1];
+      m2Ped=offlineAns[2];
+      m2Chi=offlineAns[3];
+
+      for (uint i=0; i<offlineAns.size(); i++) {
+      	if (i>3 && uint(i-4) < 10) {
+      	  m2Pulse[uint(i-4)] = offlineAns[i];
+      	}
+      }
+
+      //Slowboat_->apply(inputCaloSample,inputPedestal,slowAns);
+      
+      slow0=0;//slowAns[0];
+      slow1=0;//slowAns[1];
+      slow2=0;//slowAns[2];
+      slow3=0;//slowAns[3];
+      
+      for (uint i=0; i<slowAns.size(); i++) {
+      	if (i>3 && uint(i-4) < 10) {
+      	  slowPulse[uint(i-4)] = 0;//slowAns[i];
+      	}
+      }
+
+      tout->Fill();
+    }
   }
 
-  TCanvas *c1 = new TCanvas("c1", "c1", 800, 600);
-
-  hM0Charge->Draw();
-  c1->SaveAs("hM0Charge.png");
-
-  hM2Charge->Draw();
-  c1->SaveAs("hM2Charge.png");
-
-  hCompCharge->Draw("colz");
-  c1->SaveAs("hCompCharge.png");
-
-  hM2Time->Draw();
-  c1->SaveAs("hM2Time.png");
-
-  hBchTime->Draw();
-  c1->SaveAs("hBchTime.png");
-
-  hCompTime->Draw("colz");
-  c1->SaveAs("hCompTime.png");
-  
 }
 
 void Analysis::Finish()

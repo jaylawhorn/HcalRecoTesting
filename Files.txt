@@ -1,0 +1,1 @@
+root://eoscms//eos/cms/store/user/jlawhorn/HighPtJet80/Samples/160503_194408/0000/HCALTree_92.root

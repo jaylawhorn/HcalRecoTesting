@@ -23,16 +23,8 @@
 #include "HcalPulseShape.h"
 #include "HybridMinimizer.h"
 #include "PulseShapeFitOOTPileupCorrection.h"
-#include "HLTv2.h"
-#include "Slowboat.h"
-
-#include "inverseGaussCDF.hh"
-#include "sampleQuantile.hh"
-#include "PedestalSub.h"
 
 #include "analysistree.h"
-#include "Timing.h"
-//#include "HBHEData.h"
 
 using namespace std;
 const double EL_CHARGE=1.60217657*pow(10,-19);
@@ -58,9 +50,6 @@ class Analysis : public analysistree
   float Threshold;
   float Quantile;
 
-  //HBHEData tHBHE;
-
-  //Analysis(TTree *tree1, TTree *tree2);
   Analysis(TTree *tree);
   ~Analysis();
 
@@ -71,18 +60,14 @@ class Analysis : public analysistree
   void DoHlt();
 
   void useMethod2(){psFitOOTpuCorr_ = std::auto_ptr<PulseShapeFitOOTPileupCorrection>(new PulseShapeFitOOTPileupCorrection()); }
-  std::auto_ptr<PedestalSub> pedSubFxn_= std::auto_ptr<PedestalSub>(new PedestalSub());
          
  private:
-  TTree *tTime;
   TFile *fout;
   TTree *tout;
 
   std::auto_ptr<PulseShapeFitOOTPileupCorrection> psFitOOTpuCorr_= std::auto_ptr<PulseShapeFitOOTPileupCorrection>(new PulseShapeFitOOTPileupCorrection());
-  std::auto_ptr<HLTv2> hltv2_= std::auto_ptr<HLTv2>(new HLTv2());
   HcalPulseShapes theHcalPulseShapes_;
 
-  std::auto_ptr<Slowboat> Slowboat_ = std::auto_ptr<Slowboat>(new Slowboat());
 
 };
 #endif // Analysis_H 

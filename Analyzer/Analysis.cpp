@@ -82,10 +82,7 @@ int main(int argc, char **argv)
   } else {
 
     readparameters rp(argv[1]);
-    //TChain* ch = new TChain("HcalNoiseTree");
     TChain* ch = new TChain("ExportTree/HcalTree");
-    //TChain* ch = new TChain("HBHEData/Events");
-    //TChain* ch2 = new TChain("Timing/Events");
 
     string filelistname;
 
@@ -98,7 +95,6 @@ int main(int argc, char **argv)
     }
     while (getline(filelist,line)) {
       ch->Add(line.c_str());
-      //ch2->Add(line.c_str());
     }
 
     Analysis Ana25ns((TTree*) ch);
@@ -153,20 +149,6 @@ void Analysis::Init(char* paramfile, TTree* tree)
   else if (Region==Barrel) { cout << "HCAL barrel. " << endl; }
   else if (Region==Endcap) { cout << "HCAL endcap. " << endl; }
 
-  //if (Condition==0) {
-  //  cout << "With no PU. " << endl;
-  //}
-  //else if (Condition==50) {
-  //  cout << "50 ns spacing, 20 PU." << endl;
-  //}
-  //else if (Condition==25) {
-  //  cout << "25 ns spacing, 20 PU." << endl;
-  //}
-  //else {
-  //  Condition=0;
-  //  cout << "Unrecognized run condition, using no PU." << endl;
-  //}
-
   int check=mkdir(Plot_Dir.c_str(),755);
   if (!check) {
     cout << "Saving files to: " << Plot_Dir << endl;
@@ -176,37 +158,6 @@ void Analysis::Init(char* paramfile, TTree* tree)
     //exit(1);
   }
 
-  //if (Baseline==PedestalSub::DoNothing) {
-  //  cout << "Pedestal subtraction only." << endl;
-  //}
-  //else if (Baseline==PedestalSub::AvgWithThresh) {
-  //  cout << "Pedestal subtraction, average baseline subtraction with threshold: " << Threshold << endl;
-  //}
-  //else if (Baseline==PedestalSub::AvgWithoutThresh) {
-  //  cout << "Pedestal subtraction, average baseline subtraction with no threshold. " << endl;
-  //}
-  //else if (Baseline==PedestalSub::AvgWithThreshNoPedSub) {
-  //  cout << "Average baseline+pedestal subtraction with threshold: " << Threshold << endl;
-  //}
-  //else if (Baseline==PedestalSub::Percentile) {
-  //  cout << "Percentile-based pedestal subtraction ";
-  //  if (Quantile<0 || Quantile>1) {
-  //    cout << endl << "Quantile value out of range. Not running." << endl;
-  //    exit(1);
-  //  }
-  //  else  {
-  //    cout << "with quantile value: " << Quantile << endl;
-  //  }
-  //}
-  //
-  //if (Time_Slew==HcalTimeSlew::TestStand) cout << "Using test stand medium WP time slew parameterization." << endl;
-  //else cout << "Sorry, I don't know which time slew correction you asked for." << endl;
-  //
-  //if (Neg_Charges==HLTv2::DoNothing) cout << "Not requiring positive charge outputs." << endl;
-  //else cout << "Requiring positive charge outputs." << endl;
-
-  //tTime = tree;
-
   return; 
 }
 
@@ -215,13 +166,10 @@ void Analysis::Process() {
 
   if (Entries==-1) Entries=fChain->GetEntries();
 
-  //std::cout << Entries << std::endl;
-
   fout = new TFile(Output_File.c_str(), "RECREATE");
 
   tout = new TTree("Events", "Events");
   
-
   DoHlt();
 }
 
@@ -264,35 +212,15 @@ void Analysis::DoHlt() {
   // Now set the Pulse shape type
   psFitOOTpuCorr_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(105));
 
-  Slowboat_->Init(20.0, 5.0, 1.0, 5.0);
-  
-  //Setup HLT pedestal/baseline subtraction module
-  //pedSubFxn_->Init(((PedestalSub::Method)Baseline), Condition, Threshold, Quantile);
-  //pedSubFxn_->Init(((PedestalSub::Method)1), Condition, 2.7, 0.0);
-
-  //hltv2_->Init(HcalTimeSlew::MC, HcalTimeSlew::Medium, (HLTv2::NegStrategy)2, *pedSubFxn_); // Greg's correction
-
   Int_t iphi, ieta, depth;
   Int_t TS[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
   Double_t Pulse[10];
   Double_t Ped[10];
 
-  Double_t trigTime=0, ttcL1=0, bchTime0=0, s1Time0=0;
-  //Double_t bchTime[10];
-  //Double_t s1Time[10];
-
   Double_t m2Charge, m2Time, m2Ped, m2Chi;
   Double_t m2Pulse[10];
 
   Double_t wTime;
-
-  Double_t slow0, slow1, slow2, slow3;
-  Double_t slowPulse[10];
-
-  //tTime->SetBranchAddress("triggerTime", &trigTime);
-  //tTime->SetBranchAddress("ttcL1Atime",  &ttcL1);
-  //tTime->SetBranchAddress("bchTime",     &bchTime);
-  //tTime->SetBranchAddress("s1Time",      &s1Time);
 
   tout->Branch("iphi",  &iphi,  "iphi/I");
   tout->Branch("ieta",  &ieta,  "ieta/I");
@@ -300,11 +228,6 @@ void Analysis::DoHlt() {
   tout->Branch("TS",    &TS,    "TS[10]/I");
   tout->Branch("pulse", &Pulse, "pulse[10]/D");
   tout->Branch("ped",   &Ped,   "ped[10]/D");
-
-  //tout->Branch("triggerTime", &trigTime, "triggerTime/D");
-  //tout->Branch("ttcL1Atime",  &ttcL1,    "ttcL1Atime/D");
-  //tout->Branch("bchTime",     &bchTime0, "bchTime/D");
-  //tout->Branch("s1Time",      &s1Time0,  "s1Time/D");
 
   tout->Branch("m2Charge", &m2Charge, "m2Charge/D");
   tout->Branch("m2Time",   &m2Time,   "m2Time/D");
@@ -314,20 +237,10 @@ void Analysis::DoHlt() {
 
   tout->Branch("wTime", &wTime, "wTime/D");
 
-  tout->Branch("slow0", &slow0, "slow0/D");
-  tout->Branch("slow1", &slow1, "slow1/D");
-  tout->Branch("slow2", &slow2, "slow2/D");
-  tout->Branch("slow3", &slow3, "slow3/D");
-  tout->Branch("slowPulse", &slowPulse, "slowPulse[10]/D");
-  
   //Loop over all events
   for (int jentry=0; jentry<Entries;jentry++) {
 
     fChain->GetEntry(jentry);
-    //tTime->GetEntry(jentry);
-
-    //s1Time0=s1Time[0];
-    //bchTime0=bchTime[0];
 
     for (int j = 0; j < (int)PulseCount; j++) {
 
@@ -338,31 +251,6 @@ void Analysis::DoHlt() {
       std::vector<double> offlineAns, slowAns;
       
       ieta=IEta[j]; iphi=IPhi[j]; depth=Depth[j];
-
-      //float sum=0;
-      //for (uint i=0; i<10; i++) sum+=Charge[j][i];
-      //
-      //if (sum<50) continue;
-      //
-      //bool filter=true;
-      //int npeak=0;
-      //
-      //for (int i=0; i<10; i++) {
-      //	if (Charge[j][i]>15) {
-      //	  if (i==0) {
-      //	    filter=false;
-      //	    if (Charge[j][0]>Charge[j][1]) npeak++;
-      //	  } if (i==9) {
-      //	    filter=false;
-      //	    if (Charge[j][9]>Charge[j][8]) npeak++;
-      //	  } else {
-      //	    if (Charge[j][i]>Charge[j][i+1] && Charge[j][i]>Charge[j][i-1]) npeak++;
-      //	  }
-      //	}
-      //}
-      //if (npeak>1) filter=false;
-      //
-      //if (filter==false) continue;
 
       wTime=0;
       Double_t temp=0;
@@ -395,19 +283,6 @@ void Analysis::DoHlt() {
       for (uint i=0; i<offlineAns.size(); i++) {
       	if (i>3 && uint(i-4) < 10) {
       	  m2Pulse[uint(i-4)] = offlineAns[i];
-      	}
-      }
-
-      //Slowboat_->apply(inputCaloSample,inputPedestal,slowAns);
-      
-      slow0=0;//slowAns[0];
-      slow1=0;//slowAns[1];
-      slow2=0;//slowAns[2];
-      slow3=0;//slowAns[3];
-      
-      for (uint i=0; i<slowAns.size(); i++) {
-      	if (i>3 && uint(i-4) < 10) {
-      	  slowPulse[uint(i-4)] = 0;//slowAns[i];
       	}
       }
 

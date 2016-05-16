@@ -1,7 +1,7 @@
-in_filelist jl-inputs/Files_Testbeam.txt
-Output_File Output_Testbeam.root
+in_filelist Files.txt
+Output_File Output.root
 Entries -1
-Plot_Dir Testbeam
+Plot_Dir foo
 Region 0
 Condition 25
 Baseline 1

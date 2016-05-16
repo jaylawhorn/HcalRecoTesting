@@ -21,14 +21,14 @@ CXXRCS       = $(patsubst %.cxx,src/%.cxx,$(CXRCS))
 
 CXXOBJS      = $(patsubst %.cxx,$(ODIR)/%.o,$(CXRCS))
 
-OBJECTS = $(ODIR)/Analysis.o $(ODIR)/readparameters.o $(ODIR)/HybridMinimizer.o $(ODIR)/HcalTimeSlew.o $(ODIR)/HcalPulseShape.o $(ODIR)/PulseShapeFitOOTPileupCorrection.o $(ODIR)/HcalPulseShapes.o $(ODIR)/HLTv2.o $(ODIR)/inverseGaussCDF.o $(ODIR)/PedestalSub.o $(ODIR)/TimeSlewPar.o $(ODIR)/Slowboat.o
+OBJECTS = $(ODIR)/Analysis.o $(ODIR)/readparameters.o $(ODIR)/HybridMinimizer.o $(ODIR)/HcalTimeSlew.o $(ODIR)/HcalPulseShape.o $(ODIR)/PulseShapeFitOOTPileupCorrection.o $(ODIR)/HcalPulseShapes.o
 
 all: $(OBJECTS)
 	$(CXX) $(LDFLAGS) $(LIBS) $(CXXFLAGS) -o Analysis -g $(OBJECTS) 
 
 #Analyzer/Analysis.h: Analyzer/readparameters/readparameters.h Analyzer/HybridMinimizer.h 
 
-$(ODIR)/Analysis.o: Analyzer/Analysis.cpp Analyzer/Analysis.h Analyzer/readparameters/readparameters.h Analyzer/readparameters/readparameters.cxx Analyzer/HybridMinimizer.h Analyzer/HybridMinimizer.cc Analyzer/HcalPulseShapes.h Analyzer/HcalPulseShapes.cc Analyzer/HcalTimeSlew.h Analyzer/HcalTimeSlew.cc Analyzer/PulseShapeFitOOTPileupCorrection.h Analyzer/PulseShapeFitOOTPileupCorrection.cc Analyzer/isFinite.h Analyzer/HcalPulseShape.h Analyzer/HcalPulseShape.cc Analyzer/PedestalSub.h Analyzer/PedestalSub.cc Analyzer/HLTv2.h Analyzer/HLTv2.cc Analyzer/inverseGaussCDF.hh Analyzer/inverseGaussCDF.cc Analyzer/TimeSlewPar.h Analyzer/TimeSlewPar.cc Analyzer/Slowboat.cc
+$(ODIR)/Analysis.o: Analyzer/Analysis.cpp Analyzer/Analysis.h Analyzer/readparameters/readparameters.h Analyzer/readparameters/readparameters.cxx Analyzer/HybridMinimizer.h Analyzer/HybridMinimizer.cc Analyzer/HcalPulseShapes.h Analyzer/HcalPulseShapes.cc Analyzer/HcalTimeSlew.h Analyzer/HcalTimeSlew.cc Analyzer/PulseShapeFitOOTPileupCorrection.h Analyzer/PulseShapeFitOOTPileupCorrection.cc Analyzer/isFinite.h Analyzer/HcalPulseShape.h Analyzer/HcalPulseShape.cc 
 	$(CXX) $(CXXFLAGS) -c Analyzer/Analysis.cpp -o $@
 
 $(ODIR)/PulseShapeFitOOTPileupCorrection.o: Analyzer/PulseShapeFitOOTPileupCorrection.cc Analyzer/PulseShapeFitOOTPileupCorrection.h Analyzer/HcalPulseShapes.h Analyzer/HcalPulseShapes.cc Analyzer/HcalPulseShape.h Analyzer/HcalPulseShape.cc
@@ -48,21 +48,6 @@ $(ODIR)/HcalPulseShapes.o: Analyzer/HcalPulseShapes.h Analyzer/HcalPulseShapes.c
 
 $(ODIR)/HcalPulseShape.o: Analyzer/HcalPulseShape.h Analyzer/HcalPulseShape.cc
 	$(CXX) $(CXXFLAGS) -c Analyzer/HcalPulseShape.cc -o $@
-
-$(ODIR)/HLTv2.o: Analyzer/HLTv2.h Analyzer/HLTv2.cc
-	$(CXX) $(CXXFLAGS) -c Analyzer/HLTv2.cc -o $@
-
-$(ODIR)/Slowboat.o: Analyzer/Slowboat.h Analyzer/Slowboat.cc
-	$(CXX) $(CXXFLAGS) -c Analyzer/Slowboat.cc -o $@
-
-$(ODIR)/inverseGaussCDF.o: Analyzer/inverseGaussCDF.hh Analyzer/inverseGaussCDF.cc
-	$(CXX) $(CXXFLAGS) -c Analyzer/inverseGaussCDF.cc -o $@
-
-$(ODIR)/PedestalSub.o: Analyzer/PedestalSub.h Analyzer/PedestalSub.cc
-	$(CXX) $(CXXFLAGS) -c Analyzer/PedestalSub.cc -o $@
-
-$(ODIR)/TimeSlewPar.o: Analyzer/TimeSlewPar.h Analyzer/TimeSlewPar.cc
-	$(CXX) $(CXXFLAGS) -c Analyzer/TimeSlewPar.cc -o $@
 
 clean :
 	rm -f $(ODIR)/*.o

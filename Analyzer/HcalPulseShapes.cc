@@ -198,7 +198,7 @@ void HcalPulseShapes::computeHPDShape(float ts1, float ts2, float ts3, float thp
   //cout << " Convoluted SHAPE ==============  " << endl;
   for(i=0; i<nbin; i++){
     ntmp[i] /= norm;
-    //  cout << " shape " << i << " = " << ntmp[i] << endl;   
+    //std::cout << i << ",  " << ntmp[i] << std::endl;   
   }
 
   for(i=0; i<nbin; i++){

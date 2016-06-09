@@ -1,12 +1,12 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Tue Mar 15 13:14:11 2016 by ROOT version 5.34/32
+// Tue Mar 29 01:08:43 2016 by ROOT version 6.02/05
 // from TTree Events/Events
-// found on file: ana_h2_tb_run007480.root
+// found on file: Output_Testbeam.root
 //////////////////////////////////////////////////////////
 
-#ifndef Timing_h
-#define Timing_h
+#ifndef Events_h
+#define Events_h
 
 #include <TROOT.h>
 #include <TChain.h>
@@ -14,39 +14,45 @@
 
 // Header file for the classes stored in the TTree if any.
 
-// Fixed size dimensions of array or collections stored in the TTree if any.
-
-class Timing {
+class Events {
 public :
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
 
+// Fixed size dimensions of array or collections stored in the TTree if any.
+
    // Declaration of leaf types
-   Int_t           s1Count;
-   Int_t           s2Count;
-   Int_t           s3Count;
-   Int_t           s4Count;
-   Int_t           bcCount;
+   UInt_t          iphi;
+   UInt_t          ieta;
+   UInt_t          depth;
+   Double_t        pulse[10];
+   Double_t        ped[10];
    Double_t        triggerTime;
    Double_t        ttcL1Atime;
-   Double_t        qiePhase;
-   Double_t        bchTime[5];   //[bcCount]
-   Double_t        s1Time[5];   //[bcCount]
+   Double_t        bchTime;
+   Double_t        recoQ;
+   Double_t        recoT;
+   Double_t        recoP;
+   Double_t        recoChi;
+   Double_t        recoPulse[10];
 
    // List of branches
-   TBranch        *b_s1Count;   //!
-   TBranch        *b_s2Count;   //!
-   TBranch        *b_s3Count;   //!
-   TBranch        *b_s4Count;   //!
-   TBranch        *b_bcCount;   //!
+   TBranch        *b_iphi;   //!
+   TBranch        *b_ieta;   //!
+   TBranch        *b_depth;   //!
+   TBranch        *b_pulse;   //!
+   TBranch        *b_ped;   //!
    TBranch        *b_triggerTime;   //!
    TBranch        *b_ttcL1Atime;   //!
-   TBranch        *b_qiePhase;   //!
    TBranch        *b_bchTime;   //!
-   TBranch        *b_s1Time;   //!
+   TBranch        *b_recoQ;   //!
+   TBranch        *b_recoT;   //!
+   TBranch        *b_recoP;   //!
+   TBranch        *b_recoChi;   //!
+   TBranch        *b_recoPulse;   //!
 
-   Timing(TTree *tree=0);
-   virtual ~Timing();
+   Events(TTree *tree=0);
+   virtual ~Events();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
@@ -58,36 +64,35 @@ public :
 
 #endif
 
-#ifdef Timing_cxx
-Timing::Timing(TTree *tree) : fChain(0) 
+#ifdef Events_cxx
+Events::Events(TTree *tree) : fChain(0) 
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("ana_h2_tb_run007480.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("Output_Testbeam.root");
       if (!f || !f->IsOpen()) {
-         f = new TFile("ana_h2_tb_run007480.root");
+         f = new TFile("Output_Testbeam.root");
       }
-      TDirectory * dir = (TDirectory*)f->Get("ana_h2_tb_run007480.root:/Timing");
-      dir->GetObject("Events",tree);
+      f->GetObject("Events",tree);
 
    }
    Init(tree);
 }
 
-Timing::~Timing()
+Events::~Events()
 {
    if (!fChain) return;
    delete fChain->GetCurrentFile();
 }
 
-Int_t Timing::GetEntry(Long64_t entry)
+Int_t Events::GetEntry(Long64_t entry)
 {
 // Read contents of entry.
    if (!fChain) return 0;
    return fChain->GetEntry(entry);
 }
-Long64_t Timing::LoadTree(Long64_t entry)
+Long64_t Events::LoadTree(Long64_t entry)
 {
 // Set the environment to read one entry
    if (!fChain) return -5;
@@ -100,7 +105,7 @@ Long64_t Timing::LoadTree(Long64_t entry)
    return centry;
 }
 
-void Timing::Init(TTree *tree)
+void Events::Init(TTree *tree)
 {
    // The Init() function is called when the selector needs to initialize
    // a new tree or chain. Typically here the branch addresses and branch
@@ -116,20 +121,23 @@ void Timing::Init(TTree *tree)
    fCurrent = -1;
    fChain->SetMakeClass(1);
 
-   fChain->SetBranchAddress("s1Count", &s1Count, &b_s1Count);
-   fChain->SetBranchAddress("s2Count", &s2Count, &b_s2Count);
-   fChain->SetBranchAddress("s3Count", &s3Count, &b_s3Count);
-   fChain->SetBranchAddress("s4Count", &s4Count, &b_s4Count);
-   fChain->SetBranchAddress("bcCount", &bcCount, &b_bcCount);
+   fChain->SetBranchAddress("iphi", &iphi, &b_iphi);
+   fChain->SetBranchAddress("ieta", &ieta, &b_ieta);
+   fChain->SetBranchAddress("depth", &depth, &b_depth);
+   fChain->SetBranchAddress("pulse", pulse, &b_pulse);
+   fChain->SetBranchAddress("ped", ped, &b_ped);
    fChain->SetBranchAddress("triggerTime", &triggerTime, &b_triggerTime);
    fChain->SetBranchAddress("ttcL1Atime", &ttcL1Atime, &b_ttcL1Atime);
-   fChain->SetBranchAddress("qiePhase", &qiePhase, &b_qiePhase);
-   fChain->SetBranchAddress("bchTime", bchTime, &b_bchTime);
-   fChain->SetBranchAddress("s1Time", s1Time, &b_s1Time);
+   fChain->SetBranchAddress("bchTime", &bchTime, &b_bchTime);
+   fChain->SetBranchAddress("recoQ", &recoQ, &b_recoQ);
+   fChain->SetBranchAddress("recoT", &recoT, &b_recoT);
+   fChain->SetBranchAddress("recoP", &recoP, &b_recoP);
+   fChain->SetBranchAddress("recoChi", &recoChi, &b_recoChi);
+   fChain->SetBranchAddress("recoPulse", recoPulse, &b_recoPulse);
    Notify();
 }
 
-Bool_t Timing::Notify()
+Bool_t Events::Notify()
 {
    // The Notify() function is called when a new file is opened. This
    // can be either for a new TTree in a TChain or when when a new TTree
@@ -140,18 +148,18 @@ Bool_t Timing::Notify()
    return kTRUE;
 }
 
-void Timing::Show(Long64_t entry)
+void Events::Show(Long64_t entry)
 {
 // Print contents of entry.
 // If entry is not specified, print current entry
    if (!fChain) return;
    fChain->Show(entry);
 }
-Int_t Timing::Cut(Long64_t entry)
+Int_t Events::Cut(Long64_t entry)
 {
 // This function may be called from Loop.
 // returns  1 if entry is accepted.
 // returns -1 otherwise.
    return 1;
 }
-#endif // #ifdef Timing_cxx
+#endif // #ifdef Events_cxx

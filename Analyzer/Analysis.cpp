@@ -123,18 +123,6 @@ void Analysis::Init(char* paramfile, TTree* tree)
     catch (exception& e) {cerr<<e.what()<<endl;} 
     try {Region=rp.get<int>("Region");}
     catch (exception& e) {cerr<<e.what()<<endl;} 
-    try {Condition=rp.get<int>("Condition");}
-    catch (exception& e) {cerr<<e.what()<<endl;} 
-    try {Baseline=rp.get<int>("Baseline");}
-    catch (exception& e) {cerr<<e.what()<<endl;} 
-    try {Time_Slew=rp.get<int>("Time_Slew");}
-    catch (exception& e) {cerr<<e.what()<<endl;} 
-    try {Neg_Charges=rp.get<int>("Neg_Charges");}
-    catch (exception& e) {cerr<<e.what()<<endl;} 
-    try {Threshold=rp.get<float>("Threshold");}
-    catch (exception& e) {cerr<<e.what()<<endl;} 
-    try {Quantile=rp.get<float>("Quantile");}
-    catch (exception& e) {cerr<<e.what()<<endl;} 
   } 
   catch (exception& e) {cerr<<e.what()<<endl;} 
 
@@ -171,6 +159,47 @@ void Analysis::Process() {
   tout = new TTree("Events", "Events");
   
   DoHlt();
+  //DrawPulses();
+}
+
+void Analysis::DrawPulses() {
+
+  float ts1, ts2, ts3, thpd, tpre, wd1, wd2, wd3;
+
+  HcalPulseShapes thePulses_;
+  
+  Int_t TS[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+  Double_t pulse[10];
+
+  tout->Branch("TS",    &TS,    "TS[10]/I");
+  tout->Branch("pulse", &pulse, "pulse[10]/D");
+  tout->Branch("ts1", &ts1, "ts1/F");
+  tout->Branch("ts2", &ts2, "ts2/F");
+  tout->Branch("ts3", &ts3, "ts3/F");
+  tout->Branch("thpd", &thpd, "thpd/F");
+  tout->Branch("tpre", &tpre, "tpre/F");
+  tout->Branch("wd1", &wd1, "wd1/F");
+  tout->Branch("wd2", &wd2, "wd2/F");
+  tout->Branch("wd3", &wd3, "wd3/F");
+
+  //112.5
+  ts1=8. ; ts2=19. ; ts3=29.3; tpre=9.0; wd1=2.0; wd2=0.7; wd3=0.32;
+
+  for (Int_t k=0; k<20; k++) {
+
+    thpd=1.0+k*0.5;
+
+    for (UInt_t i=0; i<10; i++) {pulse[i]=0;}
+    thePulses_.computeHPDShape(ts1,ts2,ts3,thpd,tpre,wd1,wd2,wd3, thePulses_.hpdShape_);
+    for (UInt_t i=0; i<10; i++) {
+      for (UInt_t j=0; j<25; j++) {
+	pulse[i]+=thePulses_.hpdShape_(25*i+j-92.5);
+      }
+    }
+
+    tout->Fill();
+  }
+
 }
 
 void Analysis::DoHlt() {
@@ -263,7 +292,7 @@ void Analysis::DoHlt() {
       	//inputPedestal.push_back(0);
       	//inputGain.push_back(1.0);
       	
-      	Pulse[i]=Charge[j][i]+Pedestal[j][i];
+      	Pulse[i]=Charge[j][i];
 	Ped[i]=Pedestal[j][i];
 
 	wTime+=i*Pulse[i];

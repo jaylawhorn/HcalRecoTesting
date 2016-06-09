@@ -57,6 +57,7 @@ class Analysis : public analysistree
   void Process();
   void Finish();
 
+  void DrawPulses();
   void DoHlt();
 
   void useMethod2(){psFitOOTpuCorr_ = std::auto_ptr<PulseShapeFitOOTPileupCorrection>(new PulseShapeFitOOTPileupCorrection()); }

@@ -22,9 +22,11 @@ echo "root://eoscms//eos/cms/"${eosfolder}${file} > Files.txt
 cp ${builddir}/src/HcalRecoTesting2/Analysis .
 cp ${builddir}/src/HcalRecoTesting2/Inputs.txt .
 
-./Analysis Inputs.txt
+./Analysis Inputs.txt > /dev/null 2>&1
 
-cp Output.root ${outfolder}${file}
+#cp Output.root ${outfolder}${file}
+
+xrdcp Output.root root://eoscms/${outfolder}${file}
 
 status=`echo $?`
 echo "Status - $status"

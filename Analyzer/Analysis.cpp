@@ -202,7 +202,23 @@ void Analysis::DrawPulses() {
 
 }
 
+////// Pedestal
+/// https://github.com/cms-sw/cmssw/blob/CMSSW_8_1_X/RecoLocalCalo/HcalRecAlgos/src/PedestalSub.cc
+
+///// reference HLT M3
+/// https://github.com/cms-sw/cmssw/blob/CMSSW_8_1_X/RecoLocalCalo/HcalRecAlgos/src/HcalDeterministicFit.cc
+
+////// configure Method2
+///  https://github.com/cms-sw/cmssw/blob/CMSSW_8_1_X/RecoLocalCalo/HcalRecProducers/python/HcalHitReconstructor_hbhe_cfi.py
+
+////// class that define Method2
+///  https://github.com/cms-sw/cmssw/blob/CMSSW_8_1_X/RecoLocalCalo/HcalRecAlgos/src/PulseShapeFitOOTPileupCorrection.cc
+
 void Analysis::DoHlt() {
+
+  // these are useful to suppress the verbosity of the minimizer
+  //  extern int gErrorIgnoreLevel;
+  //  gErrorIgnoreLevel = 1001;
 
   //=========================================================================      
   // These are the values we should set for Method 2 config with the python files
@@ -246,7 +262,7 @@ void Analysis::DoHlt() {
   Double_t Pulse[10];
   Double_t Ped[10];
 
-  Double_t m2Charge, m2Time, m2Ped, m2Chi;
+  Double_t m2Charge, m2Time, m2Ped, m2Chi, m2Status;
   Double_t m2Pulse[10];
 
   Double_t wTime;
@@ -262,6 +278,7 @@ void Analysis::DoHlt() {
   tout->Branch("m2Time",   &m2Time,   "m2Time/D");
   tout->Branch("m2Ped",    &m2Ped,    "m2Ped/D");
   tout->Branch("m2Chi",    &m2Chi,    "m2Chi/D");
+  tout->Branch("m2Status", &m2Status, "m2Status/D");
   tout->Branch("m2Pulse",  &m2Pulse,  "m2Pulse[10]/D");
 
   tout->Branch("wTime", &wTime, "wTime/D");
@@ -270,15 +287,22 @@ void Analysis::DoHlt() {
   for (int jentry=0; jentry<Entries;jentry++) {
 
     fChain->GetEntry(jentry);
+    if(jentry%1000==0) cout <<"Analyzed entry "<< jentry <<"/"<< Entries << endl;
+    cout <<"Analyzed entry "<< jentry <<"/"<< Entries << endl;
 
     for (int j = 0; j < (int)PulseCount; j++) {
 
-      if (IEta[j]>16 && Region==Barrel) continue;
-      if (IEta[j]<17 && Region==Endcap) continue;
+      if (IEta[j]>14 && Region==Barrel) continue;
+      if (IEta[j]<19 && Region==Endcap) continue;
+      if (IEta[j]>27 && Region==Endcap) continue; // remove the bad tower 29
+
+      //      if (IEta[j]>14 && Region==Barrel) continue;
+      //      if (IEta[j]<19 && Region==Endcap) continue;
 
       std::vector<double> inputCaloSample, inputPedestal, inputGain;                                                           
       std::vector<double> offlineAns, slowAns;
-      
+      int status;
+
       ieta=IEta[j]; iphi=IPhi[j]; depth=Depth[j];
 
       wTime=0;
@@ -302,12 +326,13 @@ void Analysis::DoHlt() {
 
       wTime=wTime/temp;
 
-      psFitOOTpuCorr_->apply(inputCaloSample,inputPedestal,inputGain,offlineAns);
+      psFitOOTpuCorr_->apply(inputCaloSample,inputPedestal,inputGain,offlineAns, status);
 
       m2Charge=offlineAns[0];
       m2Time=offlineAns[1];
       m2Ped=offlineAns[2];
       m2Chi=offlineAns[3];
+      m2Status=status;
 
       for (uint i=0; i<offlineAns.size(); i++) {
       	if (i>3 && uint(i-4) < 10) {

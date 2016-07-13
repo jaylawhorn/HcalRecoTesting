@@ -227,23 +227,23 @@ void Analysis::DoHlt() {
   
   // --------------------------------------------------------------------
   bool iPedestalConstraint = true;
-  bool iTimeConstraint = false;
+  bool iTimeConstraint = true; // updated
   bool iAddPulseJitter = false;
   bool iUnConstrainedFit = false;
   bool iApplyTimeSlew = true;
-  double iTS4Min = 5.;
-  double iTS4Max = 500.;
+  double iTS4Min = 0.; // updated
+  double iTS4Max = 100.; // updated 
   double iPulseJitter = 1.;
   double iTimeMean = 0;
   double iTimeSig = 5.;
   double iPedMean = 0.;
   double iPedSig = 0.5;
   double iNoise = 1.;
-  double iTMin = -50.;
-  double iTMax = 50.;
-  double its3Chi2 = 10000.;
-  double its4Chi2 = 10000.;
-  double its345Chi2 = 10000.;
+  double iTMin = -12.5; // updated
+  double iTMax = 12.5; // updated
+  double its3Chi2 = 5.; // updated , not used
+  double its4Chi2 = 15.; // updated 
+  double its345Chi2 = 100.; // updated , not used
   double iChargeThreshold = 6.;
   int iFitTimes = 1;
     

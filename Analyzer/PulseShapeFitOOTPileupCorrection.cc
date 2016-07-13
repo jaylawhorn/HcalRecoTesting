@@ -75,7 +75,7 @@ namespace FitterFuncs{
     invertpedSig2_ = invertpedSig_*invertpedSig_;
   }
 
-  void PulseShapeFunctor::funcHPDShape(std::array<float,HcalConst::maxSamples> & ntmpbin, const double &pulseTime, const double &pulseHeight,const double &slew) { 
+  void PulseShapeFunctor::funcHPDShape(std::array<double,HcalConst::maxSamples> & ntmpbin, const double &pulseTime, const double &pulseHeight,const double &slew) {
     // pulse shape components over a range of time 0 ns to 255 ns in 1 ns steps
     constexpr int ns_per_bx = HcalConst::nsPerBX;
     constexpr int num_ns = HcalConst::nsPerBX*HcalConst::maxSamples;
@@ -124,11 +124,11 @@ namespace FitterFuncs{
       //calculate chisquare
       double chisq  = 0;
       double delta2 =0;
-      std::array<float,HcalConst::maxSamples> pulse_shape_sum;
+      std::array<double,HcalConst::maxSamples> pulse_shape_sum;
       for(i=0; i < (pars.size()-1)/2; ++i ){
          int time = (pars[i*2]+timeShift_-timeMean_)*HcalConst::invertnsPerBx;
          //Interpolate the fit (Quickly)
-         std::array<float,HcalConst::maxSamples> pulse_shape;
+         std::array<double,HcalConst::maxSamples> pulse_shape;
          funcHPDShape(pulse_shape, pars[i*2],pars[i*2+1],psFit_slew[time]);
          // Fill the temporary holders for the print statements
          for(unsigned k = 0; k < nbins; k++) {
@@ -269,7 +269,7 @@ void PulseShapeFitOOTPileupCorrection::resetPulseShapeTemplate(const HcalPulseSh
    tpfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::triplePulseShapeFunc, 7);
 }
 
-void PulseShapeFitOOTPileupCorrection::apply(const std::vector<double> & inputCharge, const std::vector<double> & inputPedestal, const std::vector<double> & inputGain, std::vector<double> & correctedOutput) const
+void PulseShapeFitOOTPileupCorrection::apply(const std::vector<double> & inputCharge, const std::vector<double> & inputPedestal, const std::vector<double> & inputGain, std::vector<double> & correctedOutput, int & status) const
 {
    psfPtr_->setDefaultcntNANinfit();
 
@@ -302,8 +302,9 @@ void PulseShapeFitOOTPileupCorrection::apply(const std::vector<double> & inputCh
    }
    if( tsTOTen < 0. ) tsTOTen = pedSig_;
    std::vector<double> fitParsVec;
+   status = -999;
    if( tstrig >= ts4Min_ ) { //Two sigma from 0 
-     pulseShapeFit(energyArr, pedenArr, chargeArr, pedArr, gainArr, tsTOTen, fitParsVec);
+     status=pulseShapeFit(energyArr, pedenArr, chargeArr, pedArr, gainArr, tsTOTen, fitParsVec);
    }
    correctedOutput.swap(fitParsVec); correctedOutput.push_back(psfPtr_->getcntNANinfit());
 }
@@ -449,7 +450,7 @@ void PulseShapeFitOOTPileupCorrection::fit(int iFit,float &timevalfit,float &cha
 
    double step[n];
    for(int i = 0; i < n; i++) step[i] = 0.1;
-      
+
    if(iFit == 1) hybridfitter->SetFunction(*spfunctor_);
    if(iFit == 2) hybridfitter->SetFunction(*dpfunctor_);
    if(iFit == 3) hybridfitter->SetFunction(*tpfunctor_);
@@ -500,7 +501,7 @@ void PulseShapeFitOOTPileupCorrection::fit(int iFit,float &timevalfit,float &cha
 //    }
 //    assert(results); 
    
-   
+
    double edm_temp = 0;
    double status_temp = 0;
    
@@ -545,7 +546,7 @@ void PulseShapeFitOOTPileupCorrection::fit(int iFit,float &timevalfit,float &cha
    edmStatusHolder = edm_temp;
    
 //    std::cout << "fit status number = " << hybridfitter->Status() << std::endl;
-   
+
   if(n==3){
     timevalfit2_hold = 0;
     timevalfit3_hold = 0;

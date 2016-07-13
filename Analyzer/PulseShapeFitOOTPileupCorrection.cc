@@ -300,12 +300,18 @@ void PulseShapeFitOOTPileupCorrection::apply(const std::vector<double> & inputCh
       tsTOTen += energy - peden;
       if( ip ==4 || ip==5 ) tstrig += charge - ped;
    }
-   if( tsTOTen < 0. ) tsTOTen = pedSig_;
+
+   //   if( tsTOTen < 0. ) tsTOTen = pedSig_;
    std::vector<double> fitParsVec;
    status = -999;
-   if( tstrig >= ts4Min_ ) { //Two sigma from 0 
+   if( tstrig >= ts4Min_ && tsTOTen > 0. ) { //Two sigma from 0
      status=pulseShapeFit(energyArr, pedenArr, chargeArr, pedArr, gainArr, tsTOTen, fitParsVec);
    }
+   if(tsTOTen <= 0.) {
+     // this is lower than the PED, no need to do the fits
+     status = -499;
+   }
+
    correctedOutput.swap(fitParsVec); correctedOutput.push_back(psfPtr_->getcntNANinfit());
 }
 

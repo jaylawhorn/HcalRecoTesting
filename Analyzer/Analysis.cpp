@@ -249,13 +249,31 @@ void Analysis::DoHlt() {
     
   //========================================================================
   // Set the Method 2 Parameters here
-  psFitOOTpuCorr_->setPUParams(iPedestalConstraint,iTimeConstraint,iAddPulseJitter,iUnConstrainedFit,
+  psFitOOTpuCorrDefault_->setPUParams(iPedestalConstraint,iTimeConstraint,iAddPulseJitter,iUnConstrainedFit,
+			       iApplyTimeSlew,iTS4Min, iTS4Max, iPulseJitter,iTimeMean,iTimeSig,
+			       iPedMean,iPedSig,iNoise,iTMin,iTMax,its3Chi2,its4Chi2,its345Chi2,
+			       iChargeThreshold,HcalTimeSlew::Medium, iFitTimes);
+
+  psFitOOTpuCorrDefLin_->setPUParams(iPedestalConstraint,iTimeConstraint,iAddPulseJitter,iUnConstrainedFit,
+			       iApplyTimeSlew,iTS4Min, iTS4Max, iPulseJitter,iTimeMean,iTimeSig,
+			       iPedMean,iPedSig,iNoise,iTMin,iTMax,its3Chi2,its4Chi2,its345Chi2,
+			       iChargeThreshold,HcalTimeSlew::Medium, iFitTimes);
+
+  psFitOOTpuCorrNewBar_->setPUParams(iPedestalConstraint,iTimeConstraint,iAddPulseJitter,iUnConstrainedFit,
+			       iApplyTimeSlew,iTS4Min, iTS4Max, iPulseJitter,iTimeMean,iTimeSig,
+			       iPedMean,iPedSig,iNoise,iTMin,iTMax,its3Chi2,its4Chi2,its345Chi2,
+			       iChargeThreshold,HcalTimeSlew::Medium, iFitTimes);
+
+  psFitOOTpuCorrNewEnd_->setPUParams(iPedestalConstraint,iTimeConstraint,iAddPulseJitter,iUnConstrainedFit,
 			       iApplyTimeSlew,iTS4Min, iTS4Max, iPulseJitter,iTimeMean,iTimeSig,
 			       iPedMean,iPedSig,iNoise,iTMin,iTMax,its3Chi2,its4Chi2,its345Chi2,
 			       iChargeThreshold,HcalTimeSlew::Medium, iFitTimes);
   
   // Now set the Pulse shape type
-  psFitOOTpuCorr_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(105));
+  psFitOOTpuCorrDefault_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(105));
+  psFitOOTpuCorrDefLin_->newSetPulseShapeTemplate("test_input.root","PulseInfo");
+  psFitOOTpuCorrNewBar_->newSetPulseShapeTemplate("test_input.root","NEW_Dat_Bar_PulseInfo");
+  psFitOOTpuCorrNewEnd_->newSetPulseShapeTemplate("test_input.root","NEW_Dat_End_PulseInfo");
 
   Int_t iphi, ieta, depth;
   Int_t TS[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -263,6 +281,9 @@ void Analysis::DoHlt() {
   Double_t Ped[10];
 
   Double_t m2Charge, m2Time, m2Ped, m2Chi, m2Status;
+  Double_t m2ChargeLin, m2TimeLin, m2PedLin, m2ChiLin, m2StatusLin;
+  Double_t m2ChargeNew, m2TimeNew, m2PedNew, m2ChiNew, m2StatusNew;
+
   Double_t m2Pulse[10];
 
   Double_t wTime;
@@ -281,6 +302,18 @@ void Analysis::DoHlt() {
   tout->Branch("m2Status", &m2Status, "m2Status/D");
   tout->Branch("m2Pulse",  &m2Pulse,  "m2Pulse[10]/D");
 
+  tout->Branch("m2ChargeLin", &m2ChargeLin, "m2ChargeLin/D");
+  tout->Branch("m2TimeLin",   &m2TimeLin,   "m2TimeLin/D");
+  tout->Branch("m2PedLin",    &m2PedLin,    "m2PedLin/D");
+  tout->Branch("m2ChiLin",    &m2ChiLin,    "m2ChiLin/D");
+  tout->Branch("m2StatusLin", &m2StatusLin, "m2StatusLin/D");
+
+  tout->Branch("m2ChargeNew", &m2ChargeNew, "m2ChargeNew/D");
+  tout->Branch("m2TimeNew",   &m2TimeNew,   "m2TimeNew/D");
+  tout->Branch("m2PedNew",    &m2PedNew,    "m2PedNew/D");
+  tout->Branch("m2ChiNew",    &m2ChiNew,    "m2ChiNew/D");
+  tout->Branch("m2StatusNew", &m2StatusNew, "m2StatusNew/D");
+
   tout->Branch("wTime", &wTime, "wTime/D");
 
   //Loop over all events
@@ -292,15 +325,15 @@ void Analysis::DoHlt() {
 
     for (int j = 0; j < (int)PulseCount; j++) {
 
-      if (IEta[j]>14 && Region==Barrel) continue;
-      if (IEta[j]<19 && Region==Endcap) continue;
-      if (IEta[j]>27 && Region==Endcap) continue; // remove the bad tower 29
+      if (abs(IEta[j])>14 && Region==Barrel) continue;
+      if (abs(IEta[j])<19 && Region==Endcap) continue;
+      if (abs(IEta[j])>27 || ( abs(IEta[j])>14 && abs(IEta[j])<19)) continue; // remove the bad tower 29 and transition region
 
       //      if (IEta[j]>14 && Region==Barrel) continue;
       //      if (IEta[j]<19 && Region==Endcap) continue;
 
       std::vector<double> inputCaloSample, inputPedestal, inputGain;                                                           
-      std::vector<double> offlineAns, slowAns;
+      std::vector<double> offlineAns, linAns, newAns;
       int status;
 
       ieta=IEta[j]; iphi=IPhi[j]; depth=Depth[j];
@@ -311,10 +344,11 @@ void Analysis::DoHlt() {
       for (int i=0; i<10; i++) {
 	inputCaloSample.push_back(Charge[j][i]+Pedestal[j][i]);
 	inputPedestal.push_back(Pedestal[j][i]);
-	inputGain.push_back(Gain[j][i]);
+	//inputGain.push_back(Gain[j][i]);
+
       	//inputCaloSample.push_back(pulse[j][i]);
       	//inputPedestal.push_back(0);
-      	//inputGain.push_back(1.0);
+      	inputGain.push_back(1.0);
       	
       	Pulse[i]=Charge[j][i];
 	Ped[i]=Pedestal[j][i];
@@ -326,7 +360,7 @@ void Analysis::DoHlt() {
 
       wTime=wTime/temp;
 
-      psFitOOTpuCorr_->apply(inputCaloSample,inputPedestal,inputGain,offlineAns, status);
+      psFitOOTpuCorrDefault_->apply(inputCaloSample,inputPedestal,inputGain,offlineAns, status);
 
       m2Charge=offlineAns[0];
       m2Time=offlineAns[1];
@@ -339,6 +373,27 @@ void Analysis::DoHlt() {
       	  m2Pulse[uint(i-4)] = offlineAns[i];
       	}
       }
+
+      psFitOOTpuCorrDefLin_->apply(inputCaloSample,inputPedestal,inputGain,linAns, status);
+
+      m2ChargeLin=linAns[0];
+      m2TimeLin=linAns[1];
+      m2PedLin=linAns[2];
+      m2ChiLin=linAns[3];
+      m2StatusLin=status;
+
+      if (abs(IEta[j])<14) {
+	psFitOOTpuCorrNewBar_->apply(inputCaloSample,inputPedestal,inputGain,newAns, status);
+      }
+      else {
+	psFitOOTpuCorrNewEnd_->apply(inputCaloSample,inputPedestal,inputGain,newAns, status);
+      }
+
+      m2ChargeNew=newAns[0];
+      m2TimeNew=newAns[1];
+      m2PedNew=newAns[2];
+      m2ChiNew=newAns[3];
+      m2StatusNew=status;
 
       tout->Fill();
     }

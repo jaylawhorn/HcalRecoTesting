@@ -60,13 +60,16 @@ class Analysis : public analysistree
   void DrawPulses();
   void DoHlt();
 
-  void useMethod2(){psFitOOTpuCorr_ = std::auto_ptr<PulseShapeFitOOTPileupCorrection>(new PulseShapeFitOOTPileupCorrection()); }
+  void useMethod2(){psFitOOTpuCorrDefault_ = std::auto_ptr<PulseShapeFitOOTPileupCorrection>(new PulseShapeFitOOTPileupCorrection()); }
          
  private:
   TFile *fout;
   TTree *tout;
 
-  std::auto_ptr<PulseShapeFitOOTPileupCorrection> psFitOOTpuCorr_= std::auto_ptr<PulseShapeFitOOTPileupCorrection>(new PulseShapeFitOOTPileupCorrection());
+  std::auto_ptr<PulseShapeFitOOTPileupCorrection> psFitOOTpuCorrDefault_= std::auto_ptr<PulseShapeFitOOTPileupCorrection>(new PulseShapeFitOOTPileupCorrection());
+  std::auto_ptr<PulseShapeFitOOTPileupCorrection> psFitOOTpuCorrDefLin_= std::auto_ptr<PulseShapeFitOOTPileupCorrection>(new PulseShapeFitOOTPileupCorrection());
+  std::auto_ptr<PulseShapeFitOOTPileupCorrection> psFitOOTpuCorrNewBar_= std::auto_ptr<PulseShapeFitOOTPileupCorrection>(new PulseShapeFitOOTPileupCorrection());
+  std::auto_ptr<PulseShapeFitOOTPileupCorrection> psFitOOTpuCorrNewEnd_= std::auto_ptr<PulseShapeFitOOTPileupCorrection>(new PulseShapeFitOOTPileupCorrection());
   HcalPulseShapes theHcalPulseShapes_;
 
 

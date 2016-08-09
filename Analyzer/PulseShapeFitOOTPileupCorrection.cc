@@ -3,6 +3,8 @@
 #include <climits>
 #include "PulseShapeFitOOTPileupCorrection.h"
 #include "isFinite.h"
+#include "TTree.h"
+#include "TFile.h"
 
 double digi_temp[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // TEST
 double pulse_1_temp[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};// TEST
@@ -28,6 +30,9 @@ namespace FitterFuncs{
     acc25nsVec(HcalConst::maxPSshapeBin), diff25nsItvlVec(HcalConst::maxPSshapeBin),
     accVarLenIdxZEROVec(HcalConst::nsPerBX), diffVarItvlIdxZEROVec(HcalConst::nsPerBX), 
     accVarLenIdxMinusOneVec(HcalConst::nsPerBX), diffVarItvlIdxMinusOneVec(HcalConst::nsPerBX) {
+
+    isNew_ = false;
+
     //The raw pulse
     for(int i=0;i<HcalConst::maxPSshapeBin;++i) pulse_hist[i] = pulse(i);
     // Accumulate 25ns for each starting point of 0, 1, 2, 3...
@@ -49,6 +54,71 @@ namespace FitterFuncs{
       diffVarItvlIdxZEROVec[i] = pulse_hist[i+1] - pulse_hist[0];
       diffVarItvlIdxMinusOneVec[i] = pulse_hist[i] - pulse_hist[0];
     }
+    for(int i = 0; i < HcalConst::maxSamples; i++) { 
+      psFit_x[i]      = 0;
+      psFit_y[i]      = 0;
+      psFit_erry[i]   = 1.;
+      psFit_erry2[i]  = 1.;
+      psFit_slew [i]  = 0.;
+    }
+    //Constraints
+    pedestalConstraint_ = iPedestalConstraint;
+    timeConstraint_     = iTimeConstraint;
+    addPulseJitter_     = iAddPulseJitter;
+    pulseJitter_        = iPulseJitter;
+    timeMean_           = iTimeMean;
+    timeSig_            = iTimeSig;
+    pedMean_            = iPedMean;
+    pedSig_             = iPedSig;
+    noise_              = iNoise;
+    timeShift_          = 100.;
+    timeShift_ += 12.5;//we are trying to get BX 
+
+    inverttimeSig_ = 1./timeSig_;
+    inverttimeSig2_ = inverttimeSig_*inverttimeSig_;
+    invertpedSig_ = 1./pedSig_;
+    invertpedSig2_ = invertpedSig_*invertpedSig_;
+  }
+
+  PulseShapeFunctor::PulseShapeFunctor(std::string filename, std::string treename,
+				       bool iPedestalConstraint, bool iTimeConstraint,bool iAddPulseJitter,bool iAddTimeSlew,
+				       double iPulseJitter,double iTimeMean,double iTimeSig,double iPedMean,double iPedSig,
+				       double iNoise) {
+
+    isNew_ = true;
+
+    TFile *f = new TFile(filename.c_str(),"read");
+    TTree *t = (TTree*) f->Get(treename.c_str());
+
+    float minCharge, maxCharge;
+    float pulseFrac[10], pulseFracDeriv[10];
+
+    t->SetBranchAddress("minCharge", &minCharge);
+    t->SetBranchAddress("maxCharge", &maxCharge);
+    t->SetBranchAddress("pulseFrac", &pulseFrac);
+    t->SetBranchAddress("pulseFracDeriv", &pulseFracDeriv);
+
+    for (int i=0; i<58; i++) {
+      t->GetEntry(i);
+      minCharge_[i]=minCharge;
+      maxCharge_[i]=maxCharge;
+      for (int j=0; j<10; j++) {
+	pulseFrac_[i][j]=pulseFrac[j];
+	pulseFracDeriv_[i][j]=pulseFracDeriv[j];
+      }
+    }
+
+    delete t;
+    t=0;
+    f->Close();
+    delete f;
+    f=0;
+
+    //float minCharge_[58];
+    //float maxCharge_[58];
+    //float pulseFrac_[58][10];
+    //float pulseFracDeriv_[58][10];
+
     for(int i = 0; i < HcalConst::maxSamples; i++) { 
       psFit_x[i]      = 0;
       psFit_y[i]      = 0;
@@ -112,11 +182,29 @@ namespace FitterFuncs{
     return;
   }
 
+  void PulseShapeFunctor::funcNewShape(std::array<double,HcalConst::maxSamples> & ntmpbin, const double &pulseTime, const double &pulseHeight) {
+    ntmpbin = { {0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f} };
+
+    int chargeBin = -1;
+    for (int i=0; i<58; i++) {
+      if (pulseHeight>minCharge_[i] && pulseHeight<maxCharge_[i]) chargeBin=i;
+    }
+    if (pulseHeight>maxCharge_[57]) chargeBin=57;
+
+    if (chargeBin==-1) chargeBin=0;
+
+    for (int i=0; i<10; i++) {
+      ntmpbin[i] = pulseHeight * ( pulseFrac_[chargeBin][i] + (pulseTime/25.0)*pulseFracDeriv_[chargeBin][i] );
+    }
+    return;
+  }
+
   PulseShapeFunctor::~PulseShapeFunctor() {
   }
 
   double PulseShapeFunctor::EvalPulse(const std::vector<double>& pars) {
-      constexpr unsigned nbins = (unsigned) HcalConst::maxSamples;
+    //std::cout << "eval" << std::endl;
+    constexpr unsigned nbins = (unsigned) HcalConst::maxSamples;
       unsigned i =0, j=0;
       //Stop crashes
       for(i =0; i < pars.size(); ++i ) if( edm::isNotFinite(pars[i]) ){ ++ cntNANinfit; return 1e10; }
@@ -126,16 +214,23 @@ namespace FitterFuncs{
       double delta2 =0;
       std::array<double,HcalConst::maxSamples> pulse_shape_sum;
       for(i=0; i < (pars.size()-1)/2; ++i ){
-         int time = (pars[i*2]+timeShift_-timeMean_)*HcalConst::invertnsPerBx;
          //Interpolate the fit (Quickly)
          std::array<double,HcalConst::maxSamples> pulse_shape;
-         funcHPDShape(pulse_shape, pars[i*2],pars[i*2+1],psFit_slew[time]);
+	 if (isNew_ == false) {
+	   int time = (pars[i*2]+timeShift_-timeMean_)*HcalConst::invertnsPerBx;
+	   funcHPDShape(pulse_shape, pars[i*2],pars[i*2+1],psFit_slew[time]);
+	 }
+	 else {
+	   funcNewShape(pulse_shape, pars[i*2],pars[i*2+1]);
+	 }
          // Fill the temporary holders for the print statements
          for(unsigned k = 0; k < nbins; k++) {
+	   //std::cout << pulse_shape[k] << ", ";
            if (i == 0) pulse_1_temp[k] = pulse_shape[k];
            if (i == 1) pulse_2_temp[k] = pulse_shape[k];
            if (i == 2) pulse_3_temp[k] = pulse_shape[k];
          }
+	 //std::cout << std::endl;
          
          // add an uncertainty from the pulse (currently noise * pulse height =>Ecal uses full cov)
          if(addPulseJitter_) {
@@ -171,6 +266,7 @@ namespace FitterFuncs{
 	  chisq += inverttimeSig2_*(pars[j*2] - timeMean_ - time1)*(pars[j*2] - timeMean_ - time1);
 	}
       }
+      //std::cout << chisq << std::endl;
       return chisq;
    }
 
@@ -263,6 +359,26 @@ void PulseShapeFitOOTPileupCorrection::setPulseShapeTemplate(const HcalPulseShap
 void PulseShapeFitOOTPileupCorrection::resetPulseShapeTemplate(const HcalPulseShapes::Shape& ps) { 
    ++ cntsetPulseShape;
    psfPtr_.reset(new FitterFuncs::PulseShapeFunctor(ps,pedestalConstraint_,timeConstraint_,addPulseJitter_,applyTimeSlew_,
+								 pulseJitter_,timeMean_,timeSig_,pedMean_,pedSig_,noise_));
+   spfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::singlePulseShapeFunc, 3);
+   dpfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::doublePulseShapeFunc, 5);
+   tpfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::triplePulseShapeFunc, 7);
+}
+
+void PulseShapeFitOOTPileupCorrection::newSetPulseShapeTemplate(std::string filename, std::string treename) {
+
+   if( cntsetPulseShape ) return;
+   ++ cntsetPulseShape;
+   psfPtr_.reset(new FitterFuncs::PulseShapeFunctor(filename,treename,pedestalConstraint_,timeConstraint_,addPulseJitter_,applyTimeSlew_,
+								 pulseJitter_,timeMean_,timeSig_,pedMean_,pedSig_,noise_));
+   spfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::singlePulseShapeFunc, 3);
+   dpfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::doublePulseShapeFunc, 5);
+   tpfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::triplePulseShapeFunc, 7);
+}
+
+void PulseShapeFitOOTPileupCorrection::newResetPulseShapeTemplate(std::string filename, std::string treename) { 
+   ++ cntsetPulseShape;
+   psfPtr_.reset(new FitterFuncs::PulseShapeFunctor(filename,treename,pedestalConstraint_,timeConstraint_,addPulseJitter_,applyTimeSlew_,
 								 pulseJitter_,timeMean_,timeSig_,pedMean_,pedSig_,noise_));
    spfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::singlePulseShapeFunc, 3);
    dpfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::doublePulseShapeFunc, 5);

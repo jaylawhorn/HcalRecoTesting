@@ -1,5 +1,7 @@
 #if !defined(__CINT__) || defined(__MAKECINT__)
 #include <TROOT.h>                  // access to gROOT, entry point to ROOT system
+#include <TFile.h>
+#include <TTree.h>
 #include <TSystem.h>                // interface to OS
 #include <TMath.h>                  // ROOT math library
 #include <vector>                   // STL vector class
@@ -13,15 +15,20 @@
 #include "OldPulseShape.h"
 #endif
 
-//void computeLAGShape(double LandauW, double LandauMPV, double GausSigma, double GausAsym, vector<double> &Shape);
-//void computeLAGDeriv(double LandauW, double LandauMPV, double GausSigma, double GausAsym, vector<double> &Deriv);
+void template_maker() {
 
-void template_maker(TString infile="data_barrel_values.txt") {
+  TFile *f = new TFile("test_input.root","recreate");
+  TTree *t = new TTree("PulseInfo","PulseInfo");
 
-  ifstream ifs;
-  ifs.open(infile);
-  assert(ifs.is_open());
-  string line;
+  float minCharge, maxCharge;
+  float timeSlew;
+  float pulseFrac[10], pulseFracDeriv[10];
+
+  t->Branch("minCharge", &minCharge, "minCharge/F");
+  t->Branch("maxCharge", &maxCharge, "maxCharge/F");
+  t->Branch("timeSlew",  &timeSlew,  "timeSlew/F");
+  t->Branch("pulseFrac", &pulseFrac, "pulseFrac[10]/F");
+  t->Branch("pulseFracDeriv", &pulseFracDeriv, "pulseFracDeriv[10]/F");
 
   OldPulseShape pulse;
 
@@ -29,11 +36,30 @@ void template_maker(TString infile="data_barrel_values.txt") {
   pulse.setParams(8, 19, 29.3, 4.0, 9.0, 2.0, 0.7, 0.32);
   pulse.makeShape();
 
-  pulse.setBin(4);
+  for (int i=0; i<58; i++) {
+    minCharge=20+10*i;
+    maxCharge=30+10*i;
+    timeSlew=pulse.delay(25+10*i,1);
 
-  for (int i=-15; i<15; i++) {
-    cout << i << ", " << pulse.compute(i) << endl;
+    for (int j=0; j<10; j++) {
+      pulse.setBin(j);
+      pulseFrac[j]=pulse.compute(timeSlew);
+      pulseFracDeriv[j]=0.5*(pulse.compute(timeSlew+1)-pulse.compute(timeSlew-1));
+
+      if ( pulse.compute(timeSlew)>0.01 && 
+	   ( fabs ( (pulse.compute(timeSlew+5) - pulse.compute(timeSlew) - pulseFracDeriv[j]*5)/(pulse.compute(timeSlew)) ) > 0.08 ||
+	     ( fabs ( (pulse.compute(timeSlew-5) - pulse.compute(timeSlew) + pulseFracDeriv[j]*5)/(pulse.compute(timeSlew)) ) > 0.08 ) )
+	   ) {
+	cout << i << ", " << j << endl;
+      }
+
+    }
+
+    t->Fill();
   }
+
+  f->Write();
+  f->Close();
 
   //cout << pulse.Shape_.at(100) << endl;
 

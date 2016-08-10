@@ -107,8 +107,8 @@ void new_template_maker() {
     for (int j=0; j<10; j++) {
       pulse.setBin(j);
 
-      pulseFrac[j]=pulse.compute(timeSlew);
-      pulseFracDeriv[j]=(pulse.compute(0.01)-pulse.compute(-0.01))/(0.02/25.);
+      pulseFrac[j]=pulse.compute(timeSlew/25);
+      pulseFracDeriv[j]=(pulse.compute(0.01)-pulse.compute(-0.01))/(0.02*25);
 
     }
     t0->Fill();

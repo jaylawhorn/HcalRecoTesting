@@ -194,7 +194,7 @@ namespace FitterFuncs{
     if (chargeBin==-1) chargeBin=0;
 
     for (int i=0; i<10; i++) {
-      ntmpbin[i] = pulseHeight * ( pulseFrac_[chargeBin][i] + (pulseTime/25.0)*pulseFracDeriv_[chargeBin][i] );
+      ntmpbin[i] = pulseHeight * ( pulseFrac_[chargeBin][i] + pulseTime*pulseFracDeriv_[chargeBin][i] );
     }
     return;
   }
@@ -483,16 +483,16 @@ int PulseShapeFitOOTPileupCorrection::pulseShapeFit(const double * energyArr, co
    //std::cout << "---------" << std::endl;
 
    if(ts4Chi2_ != 0) fit(1,timevalfit,chargevalfit,pedvalfit,chi2,fitStatus,tsMAX,tsTOTen,tmpy,BX);
-// Based on the pulse shape ( 2. likely gives the same performance )
-   if(tmpy[2] > 3.*tmpy[3]) BX[2] = 2;
-// Only do three-pulse fit when tstrig < ts4Max_, otherwise one-pulse fit is used (above)
-   if(chi2 > ts4Chi2_ && !unConstrainedFit_ && tstrig < ts4Max_)   { //fails chi2 cut goes straight to 3 Pulse fit
-     fit(3,timevalfit,chargevalfit,pedvalfit,chi2,fitStatus,tsMAX,tsTOTen,tmpy,BX);
-     //usedThreePulses = true;
-   }
-   if(unConstrainedFit_ && nAboveThreshold > 5) { //For the old method 2 do double pulse fit if values above a threshold
-     fit(2,timevalfit,chargevalfit,pedvalfit,chi2,fitStatus,tsMAX,tsTOTen,tmpy,BX); 
-   }
+   // Based on the pulse shape ( 2. likely gives the same performance )
+   //if(tmpy[2] > 3.*tmpy[3]) BX[2] = 2;
+   // Only do three-pulse fit when tstrig < ts4Max_, otherwise one-pulse fit is used (above)
+   //if(chi2 > ts4Chi2_ && !unConstrainedFit_ && tstrig < ts4Max_)   { //fails chi2 cut goes straight to 3 Pulse fit
+   //fit(3,timevalfit,chargevalfit,pedvalfit,chi2,fitStatus,tsMAX,tsTOTen,tmpy,BX);
+   //usedThreePulses = true;
+   //}
+   //if(unConstrainedFit_ && nAboveThreshold > 5) { //For the old method 2 do double pulse fit if values above a threshold
+   //fit(2,timevalfit,chargevalfit,pedvalfit,chi2,fitStatus,tsMAX,tsTOTen,tmpy,BX); 
+   //}
    /*
    if(chi2 > ts345Chi2_)   { //fails do two pulse chi2 for TS5 
      BX[1] = 5;

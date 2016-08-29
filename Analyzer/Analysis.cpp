@@ -271,9 +271,9 @@ void Analysis::DoHlt() {
   
   // Now set the Pulse shape type
   psFitOOTpuCorrDefault_->setPulseShapeTemplate(theHcalPulseShapes_.getShape(105));
-  psFitOOTpuCorrDefLin_->newSetPulseShapeTemplate("test_input.root","PulseInfo");
-  psFitOOTpuCorrNewBar_->newSetPulseShapeTemplate("test_input.root","NEW_Dat_Bar_PulseInfo");
-  psFitOOTpuCorrNewEnd_->newSetPulseShapeTemplate("test_input.root","NEW_Dat_End_PulseInfo");
+  psFitOOTpuCorrDefLin_->newSetPulseShapeTemplate("pulse_shape_HBHE.csv");
+  psFitOOTpuCorrNewBar_->newSetPulseShapeTemplate("pulse_shape_HB_Dat.csv");
+  psFitOOTpuCorrNewEnd_->newSetPulseShapeTemplate("pulse_shape_HE_Dat.csv");
 
   Int_t iphi, ieta, depth;
   Int_t TS[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};

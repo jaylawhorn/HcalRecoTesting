@@ -34,7 +34,7 @@ namespace FitterFuncs{
      PulseShapeFunctor(const HcalPulseShapes::Shape& pulse,bool iPedestalConstraint, bool iTimeConstraint,bool iAddPulseJitter,bool iAddTimeSlew,
 		       double iPulseJitter,double iTimeMean,double iTimeSig,double iPedMean,double iPedSig,
 		       double iNoise);
-     PulseShapeFunctor(std::string filename, std::string treename, bool iPedestalConstraint, bool iTimeConstraint,bool iAddPulseJitter,bool iAddTimeSlew,
+     PulseShapeFunctor(std::string filename, bool iPedestalConstraint, bool iTimeConstraint,bool iAddPulseJitter,bool iAddTimeSlew,
 		       double iPulseJitter,double iTimeMean,double iTimeSig,double iPedMean,double iPedSig,
 		       double iNoise);
      ~PulseShapeFunctor();
@@ -107,8 +107,8 @@ public:
     void setPulseShapeTemplate  (const HcalPulseShapes::Shape& ps);
     void resetPulseShapeTemplate(const HcalPulseShapes::Shape& ps);
 
-    void newSetPulseShapeTemplate(std::string filename, std::string treename);
-    void newResetPulseShapeTemplate(std::string filename, std::string treename);
+    void newSetPulseShapeTemplate(std::string filename);
+    void newResetPulseShapeTemplate(std::string filename);
 
 private:
     int pulseShapeFit(const double * energyArr, const double * pedenArr, const double *chargeArr, 

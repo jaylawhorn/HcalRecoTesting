@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #include <climits>
 #include "PulseShapeFitOOTPileupCorrection.h"
@@ -80,44 +81,36 @@ namespace FitterFuncs{
     invertpedSig2_ = invertpedSig_*invertpedSig_;
   }
 
-  PulseShapeFunctor::PulseShapeFunctor(std::string filename, std::string treename,
+  PulseShapeFunctor::PulseShapeFunctor(std::string filename,
 				       bool iPedestalConstraint, bool iTimeConstraint,bool iAddPulseJitter,bool iAddTimeSlew,
 				       double iPulseJitter,double iTimeMean,double iTimeSig,double iPedMean,double iPedSig,
 				       double iNoise) {
 
     isNew_ = true;
 
-    TFile *f = new TFile(filename.c_str(),"read");
-    TTree *t = (TTree*) f->Get(treename.c_str());
+    std::ifstream ifs;
+    ifs.open(filename.c_str());
+    assert(ifs.is_open());
+    std::string line;
 
-    float minCharge, maxCharge;
-    float pulseFrac[10], pulseFracDeriv[10];
+    int i = 0;
+    while(getline(ifs,line)) {
+      if(line[0]=='#') continue;
 
-    t->SetBranchAddress("minCharge", &minCharge);
-    t->SetBranchAddress("maxCharge", &maxCharge);
-    t->SetBranchAddress("pulseFrac", &pulseFrac);
-    t->SetBranchAddress("pulseFracDeriv", &pulseFracDeriv);
+      std::string tmpStr;
+      std::stringstream ss(line);
+      ss >> tmpStr;
+      minCharge_[i] = std::atoi(tmpStr.c_str());
+      ss >> tmpStr;
+      maxCharge_[i] = std::atoi(tmpStr.c_str());
+      for (int k=0; k<10; k++) { ss >> tmpStr; pulseFrac_[i][k] = std::atof(tmpStr.c_str()); }
+      for (int k=0; k<10; k++) { ss >> tmpStr; pulseFracDeriv_[i][k] = std::atof(tmpStr.c_str()); }
 
-    for (int i=0; i<58; i++) {
-      t->GetEntry(i);
-      minCharge_[i]=minCharge;
-      maxCharge_[i]=maxCharge;
-      for (int j=0; j<10; j++) {
-	pulseFrac_[i][j]=pulseFrac[j];
-	pulseFracDeriv_[i][j]=pulseFracDeriv[j];
-      }
+      i++;
+
     }
 
-    delete t;
-    t=0;
-    f->Close();
-    delete f;
-    f=0;
-
-    //float minCharge_[58];
-    //float maxCharge_[58];
-    //float pulseFrac_[58][10];
-    //float pulseFracDeriv_[58][10];
+    std::cout << "found templates for " << minCharge_[0] << " < Q < " << maxCharge_[57] << std::endl;
 
     for(int i = 0; i < HcalConst::maxSamples; i++) { 
       psFit_x[i]      = 0;
@@ -365,20 +358,20 @@ void PulseShapeFitOOTPileupCorrection::resetPulseShapeTemplate(const HcalPulseSh
    tpfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::triplePulseShapeFunc, 7);
 }
 
-void PulseShapeFitOOTPileupCorrection::newSetPulseShapeTemplate(std::string filename, std::string treename) {
+void PulseShapeFitOOTPileupCorrection::newSetPulseShapeTemplate(std::string filename) {
 
    if( cntsetPulseShape ) return;
    ++ cntsetPulseShape;
-   psfPtr_.reset(new FitterFuncs::PulseShapeFunctor(filename,treename,pedestalConstraint_,timeConstraint_,addPulseJitter_,applyTimeSlew_,
+   psfPtr_.reset(new FitterFuncs::PulseShapeFunctor(filename,pedestalConstraint_,timeConstraint_,addPulseJitter_,applyTimeSlew_,
 								 pulseJitter_,timeMean_,timeSig_,pedMean_,pedSig_,noise_));
    spfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::singlePulseShapeFunc, 3);
    dpfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::doublePulseShapeFunc, 5);
    tpfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::triplePulseShapeFunc, 7);
 }
 
-void PulseShapeFitOOTPileupCorrection::newResetPulseShapeTemplate(std::string filename, std::string treename) { 
+void PulseShapeFitOOTPileupCorrection::newResetPulseShapeTemplate(std::string filename) { 
    ++ cntsetPulseShape;
-   psfPtr_.reset(new FitterFuncs::PulseShapeFunctor(filename,treename,pedestalConstraint_,timeConstraint_,addPulseJitter_,applyTimeSlew_,
+   psfPtr_.reset(new FitterFuncs::PulseShapeFunctor(filename,pedestalConstraint_,timeConstraint_,addPulseJitter_,applyTimeSlew_,
 								 pulseJitter_,timeMean_,timeSig_,pedMean_,pedSig_,noise_));
    spfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::singlePulseShapeFunc, 3);
    dpfunctor_    = new ROOT::Math::Functor(psfPtr_.get(),&FitterFuncs::PulseShapeFunctor::doublePulseShapeFunc, 5);

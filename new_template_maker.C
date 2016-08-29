@@ -13,22 +13,27 @@
 #endif
 
 void new_template_maker() {
+  
+  string outname0 = "pulse_shape_HB_Dat.csv";
+  string outname1 = "pulse_shape_HE_Dat.csv";
+  string outname2 = "pulse_shape_HB_MC.csv";
+  string outname3 = "pulse_shape_HE_MC.csv";
 
-  TFile *f = new TFile("test_input.root","update");
-  TTree *t0 = new TTree("NEW_Dat_Bar_PulseInfo","NEW_Dat_Bar_PulseInfo");
-  TTree *t1 = new TTree("NEW_Dat_End_PulseInfo","NEW_Dat_End_PulseInfo");
-  TTree *t2 = new TTree("NEW_MC_Bar_PulseInfo","NEW_MC_Bar_PulseInfo");
-  TTree *t3 = new TTree("NEW_MC_End_PulseInfo","NEW_MC_End_PulseInfo");
+  //TFile *f = new TFile("test_input.root","update");
+  //TTree *t0 = new TTree("NEW_Dat_Bar_PulseInfo","NEW_Dat_Bar_PulseInfo");
+  //TTree *t1 = new TTree("NEW_Dat_End_PulseInfo","NEW_Dat_End_PulseInfo");
+  //TTree *t2 = new TTree("NEW_MC_Bar_PulseInfo","NEW_MC_Bar_PulseInfo");
+  //TTree *t3 = new TTree("NEW_MC_End_PulseInfo","NEW_MC_End_PulseInfo");
 
   float minCharge, maxCharge;
   float timeSlew;
   float pulseFrac[10], pulseFracDeriv[10];
 
-  t0->Branch("minCharge", &minCharge, "minCharge/F");
-  t0->Branch("maxCharge", &maxCharge, "maxCharge/F");
-  t0->Branch("timeSlew",  &timeSlew,  "timeSlew/F");
-  t0->Branch("pulseFrac", &pulseFrac, "pulseFrac[10]/F");
-  t0->Branch("pulseFracDeriv", &pulseFracDeriv, "pulseFracDeriv[10]/F");
+  //t0->Branch("minCharge", &minCharge, "minCharge/F");
+  //t0->Branch("maxCharge", &maxCharge, "maxCharge/F");
+  //t0->Branch("timeSlew",  &timeSlew,  "timeSlew/F");
+  //t0->Branch("pulseFrac", &pulseFrac, "pulseFrac[10]/F");
+  //t0->Branch("pulseFracDeriv", &pulseFracDeriv, "pulseFracDeriv[10]/F");
 
   //miao's
   double Lwidthdb[58], MPdb[58], Gsigmadb[58], Asymmdb[58];
@@ -97,6 +102,11 @@ void new_template_maker() {
 
   PulseShape pulse;
 
+  ofstream outfile0;
+  outfile0.open(outname0.c_str());
+
+  outfile0 << "#minQ, maxQ, frac[0-10], deriv[0-10] \n";
+
   for (int i=0; i<58; i++) {
     pulse.setParams(Lwidthdb[i], MPdb[i], Gsigmadb[i], Asymmdb[i]);
 
@@ -111,8 +121,15 @@ void new_template_maker() {
       pulseFracDeriv[j]=(pulse.compute(0.01)-pulse.compute(-0.01))/(0.02*25);
 
     }
-    t0->Fill();
+    //t0->Fill();
+    outfile0 << minCharge << ", " << maxCharge;
+    for (int j=0; j<10; j++) { outfile0 << ", " << pulseFrac[j]; }
+    for (int j=0; j<10; j++) { outfile0 << ", " << pulseFracDeriv[j]; }
+    outfile0 << "\n";
+
   }
+
+  outfile0.close();
   
   Lwidthde[0] = 0.265905; MPde[0] = 4.042637; Gsigmade[0] = 0.389489; Asymmde[0] = 0.114431;
   Lwidthde[1] = 0.223738; MPde[1] = 4.058252; Gsigmade[1] = 0.372269; Asymmde[1] = 0.081369;
@@ -173,11 +190,16 @@ void new_template_maker() {
   Lwidthde[56] = 0.132428; MPde[56] = 4.057151; Gsigmade[56] = 0.324119; Asymmde[56] = -0.095372;
   Lwidthde[57] = 0.131553; MPde[57] = 4.058329; Gsigmade[57] = 0.323948; Asymmde[57] = -0.093456;
 
-  t1->Branch("minCharge", &minCharge, "minCharge/F");
-  t1->Branch("maxCharge", &maxCharge, "maxCharge/F");
-  t1->Branch("timeSlew",  &timeSlew,  "timeSlew/F");
-  t1->Branch("pulseFrac", &pulseFrac, "pulseFrac[10]/F");
-  t1->Branch("pulseFracDeriv", &pulseFracDeriv, "pulseFracDeriv[10]/F");
+  //t1->Branch("minCharge", &minCharge, "minCharge/F");
+  //t1->Branch("maxCharge", &maxCharge, "maxCharge/F");
+  //t1->Branch("timeSlew",  &timeSlew,  "timeSlew/F");
+  //t1->Branch("pulseFrac", &pulseFrac, "pulseFrac[10]/F");
+  //t1->Branch("pulseFracDeriv", &pulseFracDeriv, "pulseFracDeriv[10]/F");
+
+  ofstream outfile1;
+  outfile1.open(outname1.c_str());
+
+  outfile1 << "#minQ, maxQ, frac[0-10], deriv[0-10] \n";
 
   for (int i=0; i<58; i++) {
     pulse.setParams(Lwidthde[i], MPde[i], Gsigmade[i], Asymmde[i]);
@@ -193,8 +215,16 @@ void new_template_maker() {
       pulseFracDeriv[j]=(pulse.compute(0.01)-pulse.compute(-0.01))/(0.02/25.);
 
     }
-    t1->Fill();
+
+    outfile1 << minCharge << ", " << maxCharge;
+    for (int j=0; j<10; j++) { outfile1 << ", " << pulseFrac[j]; }
+    for (int j=0; j<10; j++) { outfile1 << ", " << pulseFracDeriv[j]; }
+    outfile1 << "\n";
+
+    //t1->Fill();
   }
+
+  outfile1.close();
   
   Lwidthmb[0] = 0.201978; MPmb[0] = 4.148154; Gsigmamb[0] = 0.456533; Asymmmb[0] = 0.142273;
   Lwidthmb[1] = 0.183631; MPmb[1] = 4.130868; Gsigmamb[1] = 0.445519; Asymmmb[1] = 0.146587;
@@ -255,11 +285,16 @@ void new_template_maker() {
   Lwidthmb[56] = 0.124827; MPmb[56] = 4.054506; Gsigmamb[56] = 0.386559; Asymmmb[56] = 0.020731;
   Lwidthmb[57] = 0.123800; MPmb[57] = 4.055361; Gsigmamb[57] = 0.387378; Asymmmb[57] = 0.022329;
 
-  t2->Branch("minCharge", &minCharge, "minCharge/F");
-  t2->Branch("maxCharge", &maxCharge, "maxCharge/F");
-  t2->Branch("timeSlew",  &timeSlew,  "timeSlew/F");
-  t2->Branch("pulseFrac", &pulseFrac, "pulseFrac[10]/F");
-  t2->Branch("pulseFracDeriv", &pulseFracDeriv, "pulseFracDeriv[10]/F");
+  //t2->Branch("minCharge", &minCharge, "minCharge/F");
+  //t2->Branch("maxCharge", &maxCharge, "maxCharge/F");
+  //t2->Branch("timeSlew",  &timeSlew,  "timeSlew/F");
+  //t2->Branch("pulseFrac", &pulseFrac, "pulseFrac[10]/F");
+  //t2->Branch("pulseFracDeriv", &pulseFracDeriv, "pulseFracDeriv[10]/F");
+
+  ofstream outfile2;
+  outfile2.open(outname2.c_str());
+
+  outfile2 << "#minQ, maxQ, frac[0-10], deriv[0-10] \n";
 
   for (int i=0; i<58; i++) {
     pulse.setParams(Lwidthmb[i], MPmb[i], Gsigmamb[i], Asymmmb[i]);
@@ -275,8 +310,15 @@ void new_template_maker() {
       pulseFracDeriv[j]=(pulse.compute(0.01)-pulse.compute(-0.01))/(0.02/25.);
 
     }
-    t2->Fill();
+    //t2->Fill();
+    outfile2 << minCharge << ", " << maxCharge;
+    for (int j=0; j<10; j++) { outfile2 << ", " << pulseFrac[j]; }
+    for (int j=0; j<10; j++) { outfile2 << ", " << pulseFracDeriv[j]; }
+    outfile2 << "\n";
+
   }
+
+  outfile2.close();
   
   Lwidthme[0] = 0.188894; MPme[0] = 4.130555; Gsigmame[0] = 0.482460; Asymmme[0] = 0.124535;
   Lwidthme[1] = 0.170983; MPme[1] = 4.115428; Gsigmame[1] = 0.468343; Asymmme[1] = 0.133268;
@@ -338,11 +380,16 @@ void new_template_maker() {
   Lwidthme[57] = 0.088180; MPme[57] = 4.043233; Gsigmame[57] = 0.419903; Asymmme[57] = 0.153297;
   //end miao's
 
-  t3->Branch("minCharge", &minCharge, "minCharge/F");
-  t3->Branch("maxCharge", &maxCharge, "maxCharge/F");
-  t3->Branch("timeSlew",  &timeSlew,  "timeSlew/F");
-  t3->Branch("pulseFrac", &pulseFrac, "pulseFrac[10]/F");
-  t3->Branch("pulseFracDeriv", &pulseFracDeriv, "pulseFracDeriv[10]/F");
+  ofstream outfile3;
+  outfile3.open(outname3.c_str());
+
+  outfile3 << "#minQ, maxQ, frac[0-10], deriv[0-10] \n";
+
+  //t3->Branch("minCharge", &minCharge, "minCharge/F");
+  //t3->Branch("maxCharge", &maxCharge, "maxCharge/F");
+  //t3->Branch("timeSlew",  &timeSlew,  "timeSlew/F");
+  //t3->Branch("pulseFrac", &pulseFrac, "pulseFrac[10]/F");
+  //t3->Branch("pulseFracDeriv", &pulseFracDeriv, "pulseFracDeriv[10]/F");
 
   for (int i=0; i<58; i++) {
     pulse.setParams(Lwidthme[i], MPme[i], Gsigmame[i], Asymmme[i]);
@@ -358,10 +405,15 @@ void new_template_maker() {
       pulseFracDeriv[j]=(pulse.compute(0.01)-pulse.compute(-0.01))/(0.02/25.);
 
     }
-    t3->Fill();
-  }
+    outfile3 << minCharge << ", " << maxCharge;
+    for (int j=0; j<10; j++) { outfile3 << ", " << pulseFrac[j]; }
+    for (int j=0; j<10; j++) { outfile3 << ", " << pulseFracDeriv[j]; }
+    outfile3 << "\n";
 
-  f->Write();
-  f->Close();
+    //t3->Fill();
+  }
+  outfile3.close();
+  //f->Write();
+  //f->Close();
   
 }

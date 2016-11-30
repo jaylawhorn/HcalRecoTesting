@@ -15,9 +15,9 @@
 void new_template_maker() {
   
   string outname0 = "pulse_shape_HB_Dat.csv";
-  string outname1 = "pulse_shape_HE_Dat.csv";
+  string outname1 = "pulse_shape_HE_Dat_HPD.csv";
   string outname2 = "pulse_shape_HB_MC.csv";
-  string outname3 = "pulse_shape_HE_MC.csv";
+  string outname3 = "pulse_shape_HE_MC_HPD.csv";
 
   //TFile *f = new TFile("test_input.root","update");
   //TTree *t0 = new TTree("NEW_Dat_Bar_PulseInfo","NEW_Dat_Bar_PulseInfo");
@@ -40,7 +40,7 @@ void new_template_maker() {
   double Lwidthde[58], MPde[58], Gsigmade[58], Asymmde[58];
   double Lwidthmb[58], MPmb[58], Gsigmamb[58], Asymmmb[58];
   double Lwidthme[58], MPme[58], Gsigmame[58], Asymmme[58]; 
-  
+
   Lwidthdb[0] = 0.215959; MPdb[0] = 4.111022; Gsigmadb[0] = 0.374303; Asymmdb[0] = 0.073503;
   Lwidthdb[1] = 0.198001; MPdb[1] = 4.115118; Gsigmadb[1] = 0.350332; Asymmdb[1] = 0.053384;
   Lwidthdb[2] = 0.188862; MPdb[2] = 4.114232; Gsigmadb[2] = 0.336443; Asymmdb[2] = 0.038027;
@@ -118,7 +118,7 @@ void new_template_maker() {
       pulse.setBin(j);
 
       pulseFrac[j]=pulse.compute(timeSlew/25);
-      pulseFracDeriv[j]=(pulse.compute(0.01)-pulse.compute(-0.01))/(0.02*25);
+      pulseFracDeriv[j]=(pulse.compute(2.5)-pulse.compute(-2.5))/(5);
 
     }
     //t0->Fill();
@@ -189,7 +189,7 @@ void new_template_maker() {
   Lwidthde[55] = 0.134361; MPde[55] = 4.055407; Gsigmade[55] = 0.321407; Asymmde[55] = -0.094374;
   Lwidthde[56] = 0.132428; MPde[56] = 4.057151; Gsigmade[56] = 0.324119; Asymmde[56] = -0.095372;
   Lwidthde[57] = 0.131553; MPde[57] = 4.058329; Gsigmade[57] = 0.323948; Asymmde[57] = -0.093456;
-
+  
   //t1->Branch("minCharge", &minCharge, "minCharge/F");
   //t1->Branch("maxCharge", &maxCharge, "maxCharge/F");
   //t1->Branch("timeSlew",  &timeSlew,  "timeSlew/F");
@@ -212,7 +212,7 @@ void new_template_maker() {
       pulse.setBin(j);
 
       pulseFrac[j]=pulse.compute(timeSlew);
-      pulseFracDeriv[j]=(pulse.compute(0.01)-pulse.compute(-0.01))/(0.02/25.);
+      pulseFracDeriv[j]=(pulse.compute(2.5)-pulse.compute(2.5))/(5);
 
     }
 
@@ -225,7 +225,7 @@ void new_template_maker() {
   }
 
   outfile1.close();
-  
+
   Lwidthmb[0] = 0.201978; MPmb[0] = 4.148154; Gsigmamb[0] = 0.456533; Asymmmb[0] = 0.142273;
   Lwidthmb[1] = 0.183631; MPmb[1] = 4.130868; Gsigmamb[1] = 0.445519; Asymmmb[1] = 0.146587;
   Lwidthmb[2] = 0.173678; MPmb[2] = 4.116817; Gsigmamb[2] = 0.438951; Asymmmb[2] = 0.148417;
@@ -291,23 +291,26 @@ void new_template_maker() {
   //t2->Branch("pulseFrac", &pulseFrac, "pulseFrac[10]/F");
   //t2->Branch("pulseFracDeriv", &pulseFracDeriv, "pulseFracDeriv[10]/F");
 
+  //  PulseShape pulse;
+
   ofstream outfile2;
   outfile2.open(outname2.c_str());
 
   outfile2 << "#minQ, maxQ, frac[0-10], deriv[0-10] \n";
 
   for (int i=0; i<58; i++) {
+  //for (int i=0; i<10; i++) {
     pulse.setParams(Lwidthmb[i], MPmb[i], Gsigmamb[i], Asymmmb[i]);
-
+    //cout << " ------ " << i << " ------ " << endl;
     minCharge=20+10*i;
     maxCharge=30+10*i;
     timeSlew=0;
 
     for (int j=0; j<10; j++) {
       pulse.setBin(j);
-
+      //cout << j << ": " << pulse.compute(2.5) << ", " << pulse.compute(0) << ", " << pulse.compute(-2.5) << endl;
       pulseFrac[j]=pulse.compute(timeSlew);
-      pulseFracDeriv[j]=(pulse.compute(0.01)-pulse.compute(-0.01))/(0.02/25.);
+      pulseFracDeriv[j]=(pulse.compute(2.5)-pulse.compute(-2.5))/(5);
 
     }
     //t2->Fill();
@@ -319,7 +322,7 @@ void new_template_maker() {
   }
 
   outfile2.close();
-  
+
   Lwidthme[0] = 0.188894; MPme[0] = 4.130555; Gsigmame[0] = 0.482460; Asymmme[0] = 0.124535;
   Lwidthme[1] = 0.170983; MPme[1] = 4.115428; Gsigmame[1] = 0.468343; Asymmme[1] = 0.133268;
   Lwidthme[2] = 0.161272; MPme[2] = 4.101664; Gsigmame[2] = 0.461214; Asymmme[2] = 0.137380;
@@ -402,7 +405,7 @@ void new_template_maker() {
       pulse.setBin(j);
 
       pulseFrac[j]=pulse.compute(timeSlew);
-      pulseFracDeriv[j]=(pulse.compute(0.01)-pulse.compute(-0.01))/(0.02/25.);
+      pulseFracDeriv[j]=(pulse.compute(2.5)-pulse.compute(-2.5))/(5);
 
     }
     outfile3 << minCharge << ", " << maxCharge;
@@ -415,5 +418,5 @@ void new_template_maker() {
   outfile3.close();
   //f->Write();
   //f->Close();
-  
+
 }

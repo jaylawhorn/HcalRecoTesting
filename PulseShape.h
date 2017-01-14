@@ -19,7 +19,7 @@ public:
     
     std::vector<float> Shape;
     for (int m = 0; m<sumBin; m++){ Shape.push_back(0.0); }
-    
+    double timeslice[10] = {0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0};
     float tarea = 1.0;
     float invsq2pi = 0.3989422804014; 
     float MPVShift  = -0.22278298;
@@ -32,22 +32,22 @@ public:
       float mpc = LandauMPV_ +tshift/25 - MPVShift * LandauW_;
       float fland;
       float summ = 0.0;
-      float xlow = j - sc * GausSigma_;
-      float xupp = j + sc * GausSigma_;
+      float xlow = timeslice[j] - sc * GausSigma_;
+      float xupp = timeslice[j] + sc * GausSigma_;
       float step = (xupp-xlow) / np;
       float asigma;
       
       for(float i=1.0; i<=np/2; i++) {
 	//xx = xlow + (i-0.5) * step - *tshift/25;
 	xx = xlow + (i-0.5) * step;
-	yy = j-xx;
+	yy = timeslice[j]-xx;
 	asigma = GausSigma_+(yy>0.0)*GausAsym_*(yy-0.0);
 	fland = TMath::Landau(xx,mpc,LandauW_) / LandauW_;
 	summ += fland * exp(-0.5*pow((yy-0.0)/asigma,2)) / asigma;
 
 	//xx = xupp - (i-0.5) * step - *tshift/25;
 	xx = xupp - (i-0.5) * step;
-	yy = j-xx;
+	yy = timeslice[j]-xx;
 	asigma = GausSigma_+(yy>0.0)*GausAsym_*(yy-0.0);
 	fland = TMath::Landau(xx,mpc,LandauW_) / LandauW_;
 	summ += fland * exp(-0.5*pow((yy-0.0)/asigma,2)) / asigma;
@@ -66,6 +66,9 @@ public:
     Shape.clear();
     for (int m = 0; m<sumBin; m++){ Shape.push_back(0.0); }
     
+    double timeslice[10] = {0.0,1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0};
+
+    
     float tarea = 1.0;
     
     float invsq2pi = 0.3989422804014; 
@@ -79,20 +82,20 @@ public:
       float mpc = LandauMPV_ - MPVShift * LandauW_;
       float fland;
       float summ = 0.0;
-      float xlow = j - sc * GausSigma_;
-      float xupp = j + sc * GausSigma_;
+      float xlow = timeslice[j] - sc * GausSigma_;
+      float xupp = timeslice[j] + sc * GausSigma_;
       float step = (xupp-xlow) / np;
       float asigma;
       
       for(float i=1.0; i<=np/2; i++) {
 	xx = xlow + (i-.5) * step;
-	yy = j-xx;
+	yy = timeslice[j]-xx;
 	asigma = GausSigma_+(yy>0.0)*GausAsym_*(yy-0.0);
 	fland = TMath::Landau(xx,mpc,LandauW_) / LandauW_;
 	summ += fland * exp(-0.5*pow((yy-0.0)/asigma,2)) / asigma;
 	
 	xx = xupp - (i-0.5) * step;
-	yy = j-xx;
+	yy = timeslice[j]-xx;
 	asigma = GausSigma_+(yy>0.0)*GausAsym_*(yy-0.0);
 	fland = TMath::Landau(xx,mpc,LandauW_) / LandauW_;
 	summ += fland * exp(-0.5*pow((yy-0.0)/asigma,2)) / asigma;

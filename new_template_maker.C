@@ -14,10 +14,10 @@
 
 void new_template_maker() {
   
-  string outname0 = "pulse_shape_HB_Dat.csv";
-  string outname1 = "pulse_shape_HE_Dat_HPD.csv";
-  string outname2 = "pulse_shape_HB_MC.csv";
-  string outname3 = "pulse_shape_HE_MC_HPD.csv";
+  string outname0 = "pulse_shape_HB_Dat_test.csv";
+  string outname1 = "pulse_shape_HE_Dat_HPD_test.csv";
+  string outname2 = "pulse_shape_HB_MC_test.csv";
+  string outname3 = "pulse_shape_HE_MC_HPD_test.csv";
 
   //TFile *f = new TFile("test_input.root","update");
   //TTree *t0 = new TTree("NEW_Dat_Bar_PulseInfo","NEW_Dat_Bar_PulseInfo");
